@@ -25,6 +25,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
   int selectedSegment = 0;
   int questionIndex = 0;
   bool isLoading = false;
+  // Simpan posisi soal per segmen agar tidak reset saat pindah tab
+  final List<int> segmentQuestionIndex = [0, 0, 0];
   bool isScenarioCompleted = false;
 
   final List<String> segments = ["Listening", "Writing", "Speaking"];
@@ -50,18 +52,15 @@ class _LearningTemplateState extends State<LearningTemplate> {
 
     final data = doc.data() as Map<String, dynamic>;
 
-    // 🔥 Ambil data
     List completedLessons = List.from(data['completedLessons'] ?? []);
     List completedScenarios = List.from(data['completedScenarios'] ?? []);
 
-    // 🔥 Hitung progress scenario
     int totalThisScenario = completedLessons.where((item) {
       return item.startsWith("${widget.level}-${widget.scenario}");
     }).length;
 
     String scenarioKey = "${widget.level}-${widget.scenario}";
 
-    // 🔥 Set state sekali aja (lebih aman & clean)
     setState(() {
       progress = (data['progress'] ?? 0).toDouble();
       scenarioProgress = (totalThisScenario / 15).clamp(0.0, 1.0);
@@ -117,6 +116,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
     setState(() {
       progress = newProgress;
       scenarioProgress = totalThisScenario / 15;
+      isScenarioCompleted = completedScenarios.contains(scenarioKey);
       isLoading = false;
     });
   }
@@ -135,20 +135,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
         return const SizedBox();
     }
   }
-
-  // ─── SHARED CARD SOAL ─────────────────────────────────────────────────────
-  //
-  // Struktur isi card:
-  //   Label atas      → mis. "Listen to the audio"
-  //   Sub-label       → mis. "Choose the correct answer"
-  //   Card biru transparan (soal)
-  //     • Judul soal  → mis. "Question"
-  //     • Isi soal    → (dari Firebase, placeholder teks)
-  //   Card abu hint
-  //     • Label hint
-  //     • Isi hint    → (dari Firebase, placeholder teks)
-  //     • Pronunciation → (dari Firebase, placeholder teks)
-  //   Tombol aksi (berbeda tiap segmen)
 
   Widget _buildQuestionCard({
     required String topLabel,
@@ -207,7 +193,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Konten soal dari Firebase
               Text(
                 questionContent,
                 textAlign: TextAlign.center,
@@ -252,18 +237,39 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Pronunciation dari Firebase
+
+              // ── Pronunciation + tombol play audio ──────────────────
               Row(
                 children: [
                   const Icon(Icons.volume_up,
                       size: 16, color: Color(0xFF888888)),
                   const SizedBox(width: 6),
-                  Text(
-                    pronunciation,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Color(0xFF888888),
-                      fontStyle: FontStyle.italic,
+                  Expanded(
+                    child: Text(
+                      pronunciation,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF888888),
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ),
+                  // Tombol play audio
+                  GestureDetector(
+                    onTap: () {
+                      // TODO: tambahkan logic play audio dari Firebase
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2196F3).withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(
+                        Icons.play_circle_fill_rounded,
+                        size: 22,
+                        color: Color(0xFF2196F3),
+                      ),
                     ),
                   ),
                 ],
@@ -276,6 +282,87 @@ class _LearningTemplateState extends State<LearningTemplate> {
         // ── Tombol aksi ──────────────────────────────────────────────
         actionButton,
         const SizedBox(height: 24),
+
+        // ── Tombol Quiz: ikut scroll di dalam Card 2 ─────────────────
+        // Tidak akan tertutup navbar karena ada di dalam SingleChildScrollView
+        if (isScenarioCompleted) ...[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.green.withOpacity(0.08),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                color: Colors.green.withOpacity(0.3),
+                width: 1,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Row(
+                  children: [
+                    Icon(Icons.check_circle_rounded,
+                        color: Colors.green, size: 18),
+                    SizedBox(width: 8),
+                    Text(
+                      "Scenario Completed!",
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.green,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  "You've finished all lessons. Ready for the quiz?",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF666666),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 46,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // ─── LOGIC TIDAK DIUBAH ─────────────────────
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => QuizScreen(
+                            level: widget.level,
+                            scenario: widget.scenario,
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.quiz_rounded, size: 18),
+                    label: const Text(
+                      "Start Quiz",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
       ],
     );
   }
@@ -320,8 +407,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
       subLabel: "Choose or answer based on what you hear",
       questionTitle: "Question ${questionIndex + 1} of 5",
       questionContent: "Room for one night", // nanti dari Firebase
-      hintContent: "Hint akan muncul di sini",       // nanti dari Firebase
-      pronunciation: "/ruːm fər wʌn naɪt/",           // nanti dari Firebase
+      hintContent: "Hint akan muncul di sini", // nanti dari Firebase
+      pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
       actionButton: _actionButton(
         label: "Next",
         icon: Icons.arrow_forward_rounded,
@@ -332,7 +419,10 @@ class _LearningTemplateState extends State<LearningTemplate> {
           setState(() {
             if (questionIndex < 4) {
               questionIndex++;
+              segmentQuestionIndex[selectedSegment] = questionIndex;
             } else {
+              // Selesai segmen Listening → pindah ke Writing dari awal
+              segmentQuestionIndex[0] = 0;
               questionIndex = 0;
               selectedSegment = 1;
             }
@@ -353,11 +443,10 @@ class _LearningTemplateState extends State<LearningTemplate> {
           subLabel: "Translate the sentence below",
           questionTitle: "Question ${questionIndex + 1} of 5",
           questionContent: "Translate: Room for one night", // nanti dari Firebase
-          hintContent: "Hint akan muncul di sini",           // nanti dari Firebase
-          pronunciation: "/ruːm fər wʌn naɪt/",               // nanti dari Firebase
+          hintContent: "Hint akan muncul di sini", // nanti dari Firebase
+          pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
           actionButton: Column(
             children: [
-              // TextField tetap di dalam Writing
               TextField(
                 decoration: InputDecoration(
                   hintText: "Type your answer here...",
@@ -372,8 +461,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                        color: Color(0xFFE0E0E0), width: 1),
+                    borderSide:
+                    const BorderSide(color: Color(0xFFE0E0E0), width: 1),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -393,14 +482,16 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   setState(() {
                     if (questionIndex < 4) {
                       questionIndex++;
+                      segmentQuestionIndex[selectedSegment] = questionIndex;
                     } else {
+                      // Selesai segmen Writing → pindah ke Speaking dari awal
+                      segmentQuestionIndex[1] = 0;
                       questionIndex = 0;
                       selectedSegment = 2;
                     }
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Answer Submitted!")),
+                    const SnackBar(content: Text("Answer Submitted!")),
                   );
                 },
               ),
@@ -419,8 +510,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
       subLabel: "Read the sentence clearly",
       questionTitle: "Question ${questionIndex + 1} of 5",
       questionContent: "Room for one night", // nanti dari Firebase
-      hintContent: "Hint akan muncul di sini",   // nanti dari Firebase
-      pronunciation: "/ruːm fər wʌn naɪt/",       // nanti dari Firebase
+      hintContent: "Hint akan muncul di sini", // nanti dari Firebase
+      pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
       actionButton: _actionButton(
         label: "Start Speaking",
         icon: Icons.mic_rounded,
@@ -431,10 +522,10 @@ class _LearningTemplateState extends State<LearningTemplate> {
           setState(() {
             if (questionIndex < 4) {
               questionIndex++;
+              segmentQuestionIndex[selectedSegment] = questionIndex;
             } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                    content: Text("Semua soal selesai!")),
+                const SnackBar(content: Text("Semua soal selesai!")),
               );
             }
           });
@@ -485,7 +576,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Nama scenario
                   Text(
                     widget.scenario,
                     style: const TextStyle(
@@ -538,8 +628,11 @@ class _LearningTemplateState extends State<LearningTemplate> {
                         return Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() {
+                              // Simpan posisi soal segmen sekarang
+                              segmentQuestionIndex[selectedSegment] = questionIndex;
+                              // Pindah segmen & restore posisi soal segmen tujuan
                               selectedSegment = index;
-                              questionIndex = 0;
+                              questionIndex = segmentQuestionIndex[index];
                             }),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -587,6 +680,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
             const SizedBox(height: 14),
 
             // ── CARD 2: Konten soal ────────────────────────────────────
+            // Tombol quiz ada di DALAM scroll ini → tidak tertutup navbar
             Expanded(
               child: Container(
                 width: double.infinity,
@@ -607,40 +701,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
             ),
-            //Quis muncul setelah scenario selesai
-            if (isScenarioCompleted) ...[
-              const SizedBox(height: 12),
-
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => QuizScreen(
-                          level: widget.level,
-                          scenario: widget.scenario,
-                        ),
-                      ),
-                    );
-                  },
-                  icon: const Icon(Icons.quiz),
-                  label: const Text(
-                    "Start Quiz",
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
 
             const SizedBox(height: 12),
           ],
