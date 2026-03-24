@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "706326455197",
+    "project_id": "aplikasi-bahasa",
+    "storage_bucket": "aplikasi-bahasa.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:706326455197:android:2404d09d1faf2f10274574",
+        "android_client_info": {
+          "package_name": "com.bahasa.apk_bahasa_baru"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDSsk9TsjkwHWPnO53lHPfzINwwJQRejzI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
