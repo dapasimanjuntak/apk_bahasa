@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/quiz_screen.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class LearningTemplate extends StatefulWidget {
   final String level;
@@ -25,19 +26,68 @@ class _LearningTemplateState extends State<LearningTemplate> {
   int selectedSegment = 0;
   int questionIndex = 0;
   bool isLoading = false;
-  // Simpan posisi soal per segmen agar tidak reset saat pindah tab
-  final List<int> segmentQuestionIndex = [0, 0, 0];
   bool isScenarioCompleted = false;
-
+  final List<int> segmentQuestionIndex = [0, 0, 0];
   final List<String> segments = ["Listening", "Writing", "Speaking"];
+  final AudioPlayer player = AudioPlayer();
+
+  // ─── DATA SOAL ────────────────────────────────────────────────────────────
+  List<Map<String, dynamic>> listeningQuestions = [];
+  bool isLoadingQuestions = true;
 
   @override
   void initState() {
     super.initState();
     loadProgress();
+    loadListeningQuestions();
   }
 
-  // ─── LOGIC TIDAK DIUBAH ───────────────────────────────────────────────────
+  @override
+  void dispose() {
+    player.dispose();
+    super.dispose();
+  }
+
+  // ─── LOAD SOAL LISTENING DARI FIRESTORE ───────────────────────────────────
+  // Struktur: lessons/{level}/{scenario}/questions/
+  // doc id: "0_0", "0_1", "0_2", "0_3", "0_4" (segmen 0 = listening)
+  // fields: question, audioUrl, pronunciation
+
+  Future<void> loadListeningQuestions() async {
+    try {
+      final List<Map<String, dynamic>> loaded = [];
+
+      for (int i = 0; i < 5; i++) {
+        final doc = await FirebaseFirestore.instance
+            .collection('lessons')
+            .doc(widget.level)
+            .collection(widget.scenario)
+            .doc('question')       // sesuai struktur: lessons>beginner>airport>question
+            .collection('items')   // lalu subcollection items
+            .doc('0_$i')
+            .get();
+
+        if (doc.exists) {
+          final data = doc.data() as Map<String, dynamic>;
+          loaded.add({
+            'question': data['question'] ?? '',
+            'audioUrl': data['audioUrl'] ?? '',
+            'pronunciation': data['pronunciation'] ?? '',
+          });
+        }
+      }
+
+      setState(() {
+        listeningQuestions = loaded;
+        isLoadingQuestions = false;
+      });
+    } catch (e) {
+      debugPrint("Error loadListeningQuestions: $e");
+      setState(() => isLoadingQuestions = false);
+    }
+  }
+
+  // ─── LOGIC PROGRESS (TIDAK DIUBAH) ───────────────────────────────────────
 
   Future<void> loadProgress() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -51,7 +101,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
     if (!doc.exists) return;
 
     final data = doc.data() as Map<String, dynamic>;
-
     List completedLessons = List.from(data['completedLessons'] ?? []);
     List completedScenarios = List.from(data['completedScenarios'] ?? []);
 
@@ -121,7 +170,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
     });
   }
 
-  // ─── UI HELPERS ───────────────────────────────────────────────────────────
+  // ─── UI ───────────────────────────────────────────────────────────────────
 
   Widget buildSegmentContent() {
     switch (selectedSegment) {
@@ -136,19 +185,21 @@ class _LearningTemplateState extends State<LearningTemplate> {
     }
   }
 
+  // ─── CARD SOAL ────────────────────────────────────────────────────────────
+
   Widget _buildQuestionCard({
     required String topLabel,
     required String subLabel,
     required String questionTitle,
-    required String questionContent, // nanti dari Firebase
-    required String hintContent,     // nanti dari Firebase
-    required String pronunciation,   // nanti dari Firebase
+    required String questionContent,
+    required String hintContent,
+    required String pronunciation,
+    required String audioUrl,     // audio bahasa indonesia
     required Widget actionButton,
   }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // ── Label atas ──────────────────────────────────────────────
         Text(
           topLabel,
           style: const TextStyle(
@@ -158,14 +209,9 @@ class _LearningTemplateState extends State<LearningTemplate> {
           ),
         ),
         const SizedBox(height: 4),
-
-        // ── Sub-label ───────────────────────────────────────────────
         Text(
           subLabel,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Color(0xFF888888),
-          ),
+          style: const TextStyle(fontSize: 13, color: Color(0xFF888888)),
         ),
         const SizedBox(height: 16),
 
@@ -193,6 +239,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
               const SizedBox(height: 8),
+              // Teks soal dari Firestore
               Text(
                 questionContent,
                 textAlign: TextAlign.center,
@@ -207,7 +254,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         ),
         const SizedBox(height: 14),
 
-        // ── Card hint (abu) ─────────────────────────────────────────
+        // ── Card hint + pronunciation ────────────────────────────────
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
@@ -218,27 +265,28 @@ class _LearningTemplateState extends State<LearningTemplate> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                "Hint",
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF555555),
+              if (hintContent.isNotEmpty) ...[
+                const Text(
+                  "Hint",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF555555),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 6),
-              // Isi hint dari Firebase
-              Text(
-                hintContent,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF444444),
-                  height: 1.5,
+                const SizedBox(height: 6),
+                Text(
+                  hintContent,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color: Color(0xFF444444),
+                    height: 1.5,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
+                const SizedBox(height: 8),
+              ],
 
-              // ── Pronunciation + tombol play audio ──────────────────
+              // Pronunciation + tombol audio bahasa indonesia
               Row(
                 children: [
                   const Icon(Icons.volume_up,
@@ -254,10 +302,10 @@ class _LearningTemplateState extends State<LearningTemplate> {
                       ),
                     ),
                   ),
-                  // Tombol play audio
+                  // Tombol play audio bahasa indonesia
                   GestureDetector(
                     onTap: () {
-                      // TODO: tambahkan logic play audio dari Firebase
+                      // TODO: play audioUrl
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),
@@ -283,8 +331,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         actionButton,
         const SizedBox(height: 24),
 
-        // ── Tombol Quiz: ikut scroll di dalam Card 2 ─────────────────
-        // Tidak akan tertutup navbar karena ada di dalam SingleChildScrollView
+        // ── Tombol Quiz setelah scenario selesai ─────────────────────
         if (isScenarioCompleted) ...[
           Container(
             width: double.infinity,
@@ -318,10 +365,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 const SizedBox(height: 4),
                 const Text(
                   "You've finished all lessons. Ready for the quiz?",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Color(0xFF666666),
-                  ),
+                  style: TextStyle(fontSize: 12, color: Color(0xFF666666)),
                 ),
                 const SizedBox(height: 12),
                 SizedBox(
@@ -329,7 +373,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   height: 46,
                   child: ElevatedButton.icon(
                     onPressed: () {
-                      // ─── LOGIC TIDAK DIUBAH ─────────────────────
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -344,9 +387,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                     label: const Text(
                       "Start Quiz",
                       style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 14,
-                      ),
+                          fontWeight: FontWeight.w600, fontSize: 14),
                     ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.green,
@@ -367,7 +408,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── TOMBOL AKSI (shared style) ────────────────────────────────────────────
+  // ─── TOMBOL AKSI ─────────────────────────────────────────────────────────
 
   Widget _actionButton({
     required String label,
@@ -382,10 +423,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         icon: Icon(icon, size: 18),
         label: Text(
           label,
-          style: const TextStyle(
-            fontSize: 15,
-            fontWeight: FontWeight.w600,
-          ),
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF2196F3),
@@ -399,18 +437,45 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── SEGMEN LISTENING ──────────────────────────────────────────────────────
+  // ─── SEGMEN LISTENING (DATA DARI FIRESTORE) ───────────────────────────────
 
   Widget _buildListeningSegment() {
+    // Loading state
+    if (isLoadingQuestions) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
+    // Kalau data kosong / belum ada di Firestore
+    if (listeningQuestions.isEmpty) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: Text(
+            "Soal belum tersedia",
+            style: TextStyle(color: Color(0xFF888888)),
+          ),
+        ),
+      );
+    }
+
+    // Ambil soal sesuai index
+    final q = listeningQuestions[questionIndex];
+
     return _buildQuestionCard(
-      topLabel: "Listen to the audio",
-      subLabel: "Choose or answer based on what you hear",
-      questionTitle: "Question ${questionIndex + 1} of 5",
-      questionContent: "Room for one night", // nanti dari Firebase
-      hintContent: "Hint akan muncul di sini", // nanti dari Firebase
-      pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
+      topLabel: "Dengarkan audio berikut",
+      subLabel: "Simak baik-baik lalu lanjut ke soal berikutnya",
+      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      questionContent: q['question'] ?? '',       // dari Firestore
+      audioUrl: q['audioUrl'] ?? '',              // dari Firestore (audio bahasa indonesia)
+      pronunciation: q['pronunciation'] ?? '',   // dari Firestore
+      hintContent: '',                            // listening tidak pakai hint
       actionButton: _actionButton(
-        label: "Next",
+        label: "Lanjut",
         icon: Icons.arrow_forward_rounded,
         onPressed: isLoading
             ? null
@@ -421,7 +486,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
               questionIndex++;
               segmentQuestionIndex[selectedSegment] = questionIndex;
             } else {
-              // Selesai segmen Listening → pindah ke Writing dari awal
               segmentQuestionIndex[0] = 0;
               questionIndex = 0;
               selectedSegment = 1;
@@ -432,24 +496,25 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── SEGMEN WRITING ────────────────────────────────────────────────────────
+  // ─── SEGMEN WRITING (DUMMY DULU) ─────────────────────────────────────────
 
   Widget _buildWritingSegment() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildQuestionCard(
-          topLabel: "Write your answer",
-          subLabel: "Translate the sentence below",
-          questionTitle: "Question ${questionIndex + 1} of 5",
-          questionContent: "Translate: Room for one night", // nanti dari Firebase
-          hintContent: "Hint akan muncul di sini", // nanti dari Firebase
-          pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
+          topLabel: "Tulis jawabanmu",
+          subLabel: "Terjemahkan kalimat berikut ke Bahasa Indonesia",
+          questionTitle: "Soal ${questionIndex + 1} dari 5",
+          questionContent: "Translate: Room for one night", // dummy — nanti dari Firestore
+          hintContent: "Hint akan muncul di sini",          // dummy — nanti dari Firestore
+          pronunciation: "/ruːm fər wʌn naɪt/",             // dummy — nanti dari Firestore
+          audioUrl: '',
           actionButton: Column(
             children: [
               TextField(
                 decoration: InputDecoration(
-                  hintText: "Type your answer here...",
+                  hintText: "Ketik jawabanmu di sini...",
                   hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
                   filled: true,
                   fillColor: const Color(0xFFF8F8F8),
@@ -473,7 +538,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
               ),
               const SizedBox(height: 14),
               _actionButton(
-                label: "Submit",
+                label: "Kirim",
                 icon: Icons.check_rounded,
                 onPressed: isLoading
                     ? null
@@ -482,16 +547,16 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   setState(() {
                     if (questionIndex < 4) {
                       questionIndex++;
-                      segmentQuestionIndex[selectedSegment] = questionIndex;
+                      segmentQuestionIndex[selectedSegment] =
+                          questionIndex;
                     } else {
-                      // Selesai segmen Writing → pindah ke Speaking dari awal
                       segmentQuestionIndex[1] = 0;
                       questionIndex = 0;
                       selectedSegment = 2;
                     }
                   });
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Answer Submitted!")),
+                    const SnackBar(content: Text("Jawaban terkirim!")),
                   );
                 },
               ),
@@ -502,18 +567,19 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── SEGMEN SPEAKING ───────────────────────────────────────────────────────
+  // ─── SEGMEN SPEAKING (DUMMY DULU) ────────────────────────────────────────
 
   Widget _buildSpeakingSegment() {
     return _buildQuestionCard(
-      topLabel: "Speak out loud",
-      subLabel: "Read the sentence clearly",
-      questionTitle: "Question ${questionIndex + 1} of 5",
-      questionContent: "Room for one night", // nanti dari Firebase
-      hintContent: "Hint akan muncul di sini", // nanti dari Firebase
-      pronunciation: "/ruːm fər wʌn naɪt/", // nanti dari Firebase
+      topLabel: "Ucapkan dengan lantang",
+      subLabel: "Baca kalimat berikut dengan jelas",
+      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      questionContent: "Room for one night", // dummy — nanti dari Firestore
+      hintContent: "Hint akan muncul di sini", // dummy — nanti dari Firestore
+      pronunciation: "/ruːm fər wʌn naɪt/",   // dummy — nanti dari Firestore
+      audioUrl: '',
       actionButton: _actionButton(
-        label: "Start Speaking",
+        label: "Mulai Berbicara",
         icon: Icons.mic_rounded,
         onPressed: isLoading
             ? null
@@ -534,7 +600,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── BUILD ─────────────────────────────────────────────────────────────────
+  // ─── BUILD ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -558,7 +624,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Column(
           children: [
-            // ── CARD 1: Scenario info + progress bar + segmen nav ──────
+            // ── CARD 1: Info scenario + progress + segmen nav ──────────
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -593,8 +659,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                     ),
                   ),
                   const SizedBox(height: 12),
-
-                  // Progress bar
                   ClipRRect(
                     borderRadius: BorderRadius.circular(8),
                     child: LinearProgressIndicator(
@@ -607,7 +671,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    "${(scenarioProgress * 100).toInt()}% completed",
+                    "${(scenarioProgress * 100).toInt()}% selesai",
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF888888),
@@ -628,9 +692,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                         return Expanded(
                           child: GestureDetector(
                             onTap: () => setState(() {
-                              // Simpan posisi soal segmen sekarang
-                              segmentQuestionIndex[selectedSegment] = questionIndex;
-                              // Pindah segmen & restore posisi soal segmen tujuan
+                              segmentQuestionIndex[selectedSegment] =
+                                  questionIndex;
                               selectedSegment = index;
                               questionIndex = segmentQuestionIndex[index];
                             }),
@@ -646,8 +709,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                                 boxShadow: isActive
                                     ? [
                                   BoxShadow(
-                                    color:
-                                    Colors.black.withOpacity(0.08),
+                                    color: Colors.black.withOpacity(0.08),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
                                   ),
@@ -680,7 +742,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
             const SizedBox(height: 14),
 
             // ── CARD 2: Konten soal ────────────────────────────────────
-            // Tombol quiz ada di DALAM scroll ini → tidak tertutup navbar
             Expanded(
               child: Container(
                 width: double.infinity,
