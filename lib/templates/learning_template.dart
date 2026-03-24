@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../screens/quiz_screen.dart';
 
 class LearningTemplate extends StatefulWidget {
   final String level;
@@ -24,6 +25,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
   int selectedSegment = 0;
   int questionIndex = 0;
   bool isLoading = false;
+  bool isScenarioCompleted = false;
 
   final List<String> segments = ["Listening", "Writing", "Speaking"];
 
@@ -44,18 +46,27 @@ class _LearningTemplateState extends State<LearningTemplate> {
         .doc(user.uid)
         .get();
 
-    if (doc.exists) {
-      final data = doc.data() as Map<String, dynamic>;
-      List completedLessons = List.from(data['completedLessons'] ?? []);
-      int totalThisScenario = completedLessons.where((item) {
-        return item.startsWith("${widget.level}-${widget.scenario}");
-      }).length;
+    if (!doc.exists) return;
 
-      setState(() {
-        progress = (data['progress'] ?? 0).toDouble();
-        scenarioProgress = totalThisScenario / 15;
-      });
-    }
+    final data = doc.data() as Map<String, dynamic>;
+
+    // 🔥 Ambil data
+    List completedLessons = List.from(data['completedLessons'] ?? []);
+    List completedScenarios = List.from(data['completedScenarios'] ?? []);
+
+    // 🔥 Hitung progress scenario
+    int totalThisScenario = completedLessons.where((item) {
+      return item.startsWith("${widget.level}-${widget.scenario}");
+    }).length;
+
+    String scenarioKey = "${widget.level}-${widget.scenario}";
+
+    // 🔥 Set state sekali aja (lebih aman & clean)
+    setState(() {
+      progress = (data['progress'] ?? 0).toDouble();
+      scenarioProgress = (totalThisScenario / 15).clamp(0.0, 1.0);
+      isScenarioCompleted = completedScenarios.contains(scenarioKey);
+    });
   }
 
   Future<void> completeLesson() async {
@@ -596,6 +607,40 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
             ),
+            //Quis muncul setelah scenario selesai
+            if (isScenarioCompleted) ...[
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => QuizScreen(
+                          level: widget.level,
+                          scenario: widget.scenario,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.quiz),
+                  label: const Text(
+                    "Start Quiz",
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
 
             const SizedBox(height: 12),
           ],
