@@ -304,8 +304,15 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   ),
                   // Tombol play audio bahasa indonesia
                   GestureDetector(
-                    onTap: () {
-                      // TODO: play audioUrl
+                    onTap: () async {
+                      if (audioUrl.isNotEmpty) {
+                        try {
+                          await player.stop(); // biar gak numpuk
+                          await player.play(UrlSource(audioUrl));
+                        } catch (e) {
+                          debugPrint("Error play audio: $e");
+                        }
+                      }
                     },
                     child: Container(
                       padding: const EdgeInsets.all(6),
