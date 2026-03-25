@@ -1,12 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart'; // ✅ tambahkan ini
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart';
+
 import 'screens/login_screen.dart';
+import 'screens/language_service.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // wajib sebelum Firebase
-  await Firebase.initializeApp(); // inisialisasi Firebase
-  print("🔥 Firebase Initialized");
-  runApp(const MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+
+  // 🔥 INIT LANGUAGE
+  final langService = LanguageService();
+  await langService.loadLanguage();
+
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => langService,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

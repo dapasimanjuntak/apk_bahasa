@@ -1,12 +1,15 @@
 // File: lib/screens/level_screen.dart
 import 'package:flutter/material.dart';
 import '../templates/levels_scenario_template.dart';
+import 'package:provider/provider.dart';
+import 'language_service.dart';
 
 class LevelScreen extends StatelessWidget {
   const LevelScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       backgroundColor: Colors.grey[100],
       body: SafeArea(
@@ -30,8 +33,8 @@ class LevelScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              const Text(
-                "Choose Your Level",
+              Text(
+                lang.t('level_info'),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
@@ -41,8 +44,8 @@ class LevelScreen extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              const Text(
-                "Select a difficulty level to begin your journey",
+              Text(
+                lang.t('level_info_2'),
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.black54),
               ),
@@ -53,8 +56,8 @@ class LevelScreen extends StatelessWidget {
               _buildLevelCard(
                 context: context,
                 icon: Icons.star,
-                title: "Beginner",
-                subtitle: "Basic daily conversation",
+                title: lang.t('lvl1'),
+                subtitle: lang.t('lvl1_sub'),
               ),
 
               const SizedBox(height: 16),
@@ -63,8 +66,8 @@ class LevelScreen extends StatelessWidget {
               _buildLevelCard(
                 context: context,
                 icon: Icons.star_half,
-                title: "Intermediate",
-                subtitle: "Situational dialogues",
+                title: lang.t('lvl2'),
+                subtitle: lang.t('lvl2_sub'),
               ),
 
               const SizedBox(height: 16),
@@ -73,8 +76,8 @@ class LevelScreen extends StatelessWidget {
               _buildLevelCard(
                 context: context,
                 icon: Icons.workspace_premium,
-                title: "Advanced",
-                subtitle: "Complex communication",
+                title: lang.t('lvl3'),
+                subtitle: lang.t('lvl3_sub'),
               ),
             ],
           ),
@@ -89,6 +92,7 @@ class LevelScreen extends StatelessWidget {
     required String title,
     required String subtitle,
   }) {
+    final lang = Provider.of<LanguageService>(context); // ✅ TAMBAHKAN INI
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -151,7 +155,7 @@ class LevelScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text("Start Learning"),
+              child: Text(lang.t('lvl_button')),
             ),
           ),
         ],

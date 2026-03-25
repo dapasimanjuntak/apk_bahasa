@@ -31,29 +31,32 @@ class _LearningTemplateState extends State<LearningTemplate> {
   final List<String> segments = ["Listening", "Writing", "Speaking"];
   final AudioPlayer player = AudioPlayer();
 
-  // ─── DATA SOAL ────────────────────────────────────────────────────────────
-  List<Map<String, dynamic>> listeningQuestions = [];
+  // ─── DATA SOAL (SAMA UNTUK SEMUA SEGMEN) ─────────────────────────────────
+  List<Map<String, dynamic>> questions = [];
   bool isLoadingQuestions = true;
+
+  // ─── WRITING INPUT ────────────────────────────────────────────────────────
+  final TextEditingController writingController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     loadProgress();
-    loadListeningQuestions();
+    loadQuestions();
   }
 
   @override
   void dispose() {
     player.dispose();
+    writingController.dispose();
     super.dispose();
   }
 
-  // ─── LOAD SOAL LISTENING DARI FIRESTORE ───────────────────────────────────
-  // Struktur: lessons/{level}/{scenario}/questions/
-  // doc id: "0_0", "0_1", "0_2", "0_3", "0_4" (segmen 0 = listening)
-  // fields: question, audioUrl, pronunciation
+  // ─── LOAD SOAL DARI FIRESTORE ─────────────────────────────────────────────
+  // Struktur: lessons/{level}/{scenario}/question/items/{0_0 ~ 0_4}
+  // Fields  : question, audioUrl, pronuncituation
 
-  Future<void> loadListeningQuestions() async {
+  Future<void> loadQuestions() async {
     try {
       final List<Map<String, dynamic>> loaded = [];
 
@@ -62,8 +65,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
             .collection('lessons')
             .doc(widget.level)
             .collection(widget.scenario)
-            .doc('question')       // sesuai struktur: lessons>beginner>airport>question
-            .collection('items')   // lalu subcollection items
+            .doc('question')
+            .collection('items')
             .doc('0_$i')
             .get();
 
@@ -78,12 +81,48 @@ class _LearningTemplateState extends State<LearningTemplate> {
       }
 
       setState(() {
-        listeningQuestions = loaded;
+        questions = loaded;
         isLoadingQuestions = false;
       });
     } catch (e) {
-      debugPrint("Error loadListeningQuestions: $e");
+      debugPrint("Error loadQuestions: $e");
       setState(() => isLoadingQuestions = false);
+    }
+  }
+
+  // ─── SIMPAN JAWABAN USER KE FIRESTORE ────────────────────────────────────
+  // Struktur: users/{uid}/answers/{level}_{scenario}_{segmen}_{index}
+  // Field score dikosongkan dulu, diisi setelah NLP TF-IDF dijalankan nanti
+
+  Future<void> saveUserAnswer({
+    required int segmen,
+    required int index,
+    required String userAnswer,
+  }) async {
+    if (userAnswer.trim().isEmpty) return;
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final answerKey =
+          "${widget.level}_${widget.scenario}_${segmen}_$index";
+
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('answers')
+          .doc(answerKey)
+          .set({
+        'userAnswer': userAnswer.trim(),
+        'level': widget.level,
+        'scenario': widget.scenario,
+        'segmen': segmen,
+        'questionIndex': index,
+        'timestamp': FieldValue.serverTimestamp(),
+        // 'score' diisi nanti setelah NLP dijalankan
+      }, SetOptions(merge: true));
+    } catch (e) {
+      debugPrint("Error saveUserAnswer: $e");
     }
   }
 
@@ -185,16 +224,37 @@ class _LearningTemplateState extends State<LearningTemplate> {
     }
   }
 
-  // ─── CARD SOAL ────────────────────────────────────────────────────────────
+  // ─── SHARED: LOADING / KOSONG ─────────────────────────────────────────────
+
+  Widget _buildLoadingOrEmpty() {
+    if (isLoadingQuestions) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(40),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(40),
+        child: Text(
+          "Soal belum tersedia",
+          style: TextStyle(color: Color(0xFF888888)),
+        ),
+      ),
+    );
+  }
+
+  // ─── SHARED CARD SOAL ────────────────────────────────────────────────────
 
   Widget _buildQuestionCard({
     required String topLabel,
     required String subLabel,
     required String questionTitle,
     required String questionContent,
-    required String hintContent,
     required String pronunciation,
-    required String audioUrl,     // audio bahasa indonesia
+    required String audioUrl,
     required Widget actionButton,
   }) {
     return Column(
@@ -215,7 +275,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         ),
         const SizedBox(height: 16),
 
-        // ── Card soal (biru transparan) ──────────────────────────────
+        // ── Card soal ────────────────────────────────────────────────
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(16),
@@ -239,7 +299,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 ),
               ),
               const SizedBox(height: 8),
-              // Teks soal dari Firestore
               Text(
                 questionContent,
                 textAlign: TextAlign.center,
@@ -254,7 +313,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
         ),
         const SizedBox(height: 14),
 
-        // ── Card hint + pronunciation ────────────────────────────────
+        // ── Card pronunciation + audio ────────────────────────────────
         Container(
           width: double.infinity,
           padding: const EdgeInsets.all(14),
@@ -262,79 +321,50 @@ class _LearningTemplateState extends State<LearningTemplate> {
             color: const Color(0xFFF2F2F2),
             borderRadius: BorderRadius.circular(14),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: [
-              if (hintContent.isNotEmpty) ...[
-                const Text(
-                  "Hint",
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF555555),
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  hintContent,
+              const Icon(Icons.volume_up, size: 16, color: Color(0xFF888888)),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  pronunciation,
                   style: const TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF444444),
-                    height: 1.5,
+                    fontSize: 13,
+                    color: Color(0xFF888888),
+                    fontStyle: FontStyle.italic,
                   ),
                 ),
-                const SizedBox(height: 8),
-              ],
-
-              // Pronunciation + tombol audio bahasa indonesia
-              Row(
-                children: [
-                  const Icon(Icons.volume_up,
-                      size: 16, color: Color(0xFF888888)),
-                  const SizedBox(width: 6),
-                  Expanded(
-                    child: Text(
-                      pronunciation,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF888888),
-                        fontStyle: FontStyle.italic,
-                      ),
-                    ),
+              ),
+              // Tombol play audio bahasa indonesia
+              GestureDetector(
+                onTap: () async {
+                  if (audioUrl.isNotEmpty) {
+                    try {
+                      await player.stop();
+                      await player.play(UrlSource(audioUrl));
+                    } catch (e) {
+                      debugPrint("Error play audio: $e");
+                    }
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2196F3).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(8),
                   ),
-                  // Tombol play audio bahasa indonesia
-                  GestureDetector(
-                    onTap: () async {
-                      if (audioUrl.isNotEmpty) {
-                        try {
-                          await player.stop(); // biar gak numpuk
-                          await player.play(UrlSource(audioUrl));
-                        } catch (e) {
-                          debugPrint("Error play audio: $e");
-                        }
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2196F3).withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Icon(
-                        Icons.play_circle_fill_rounded,
-                        size: 22,
-                        color: Color(0xFF2196F3),
-                      ),
-                    ),
+                  child: const Icon(
+                    Icons.play_circle_fill_rounded,
+                    size: 22,
+                    color: Color(0xFF2196F3),
                   ),
-                ],
+                ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 20),
 
-        // ── Tombol aksi ──────────────────────────────────────────────
         actionButton,
         const SizedBox(height: 24),
 
@@ -444,43 +474,19 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── SEGMEN LISTENING (DATA DARI FIRESTORE) ───────────────────────────────
+  // ─── SEGMEN LISTENING ─────────────────────────────────────────────────────
 
   Widget _buildListeningSegment() {
-    // Loading state
-    if (isLoadingQuestions) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // Kalau data kosong / belum ada di Firestore
-    if (listeningQuestions.isEmpty) {
-      return const Center(
-        child: Padding(
-          padding: EdgeInsets.all(40),
-          child: Text(
-            "Soal belum tersedia",
-            style: TextStyle(color: Color(0xFF888888)),
-          ),
-        ),
-      );
-    }
-
-    // Ambil soal sesuai index
-    final q = listeningQuestions[questionIndex];
+    if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
+    final q = questions[questionIndex];
 
     return _buildQuestionCard(
       topLabel: "Dengarkan audio berikut",
       subLabel: "Simak baik-baik lalu lanjut ke soal berikutnya",
       questionTitle: "Soal ${questionIndex + 1} dari 5",
-      questionContent: q['question'] ?? '',       // dari Firestore
-      audioUrl: q['audioUrl'] ?? '',              // dari Firestore (audio bahasa indonesia)
-      pronunciation: q['pronunciation'] ?? '',   // dari Firestore
-      hintContent: '',                            // listening tidak pakai hint
+      questionContent: q['question'] ?? '',
+      audioUrl: q['audioUrl'] ?? '',
+      pronunciation: q['pronunciation'] ?? '',
       actionButton: _actionButton(
         label: "Lanjut",
         icon: Icons.arrow_forward_rounded,
@@ -503,106 +509,153 @@ class _LearningTemplateState extends State<LearningTemplate> {
     );
   }
 
-  // ─── SEGMEN WRITING (DUMMY DULU) ─────────────────────────────────────────
+  // ─── SEGMEN WRITING ───────────────────────────────────────────────────────
 
   Widget _buildWritingSegment() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildQuestionCard(
-          topLabel: "Tulis jawabanmu",
-          subLabel: "Terjemahkan kalimat berikut ke Bahasa Indonesia",
-          questionTitle: "Soal ${questionIndex + 1} dari 5",
-          questionContent: "Translate: Room for one night", // dummy — nanti dari Firestore
-          hintContent: "Hint akan muncul di sini",          // dummy — nanti dari Firestore
-          pronunciation: "/ruːm fər wʌn naɪt/",             // dummy — nanti dari Firestore
-          audioUrl: '',
-          actionButton: Column(
-            children: [
-              TextField(
-                decoration: InputDecoration(
-                  hintText: "Ketik jawabanmu di sini...",
-                  hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
-                  filled: true,
-                  fillColor: const Color(0xFFF8F8F8),
-                  contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16, vertical: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide:
-                    const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(
-                        color: Color(0xFF2196F3), width: 1.5),
-                  ),
-                ),
+    if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
+    final q = questions[questionIndex];
+
+    return _buildQuestionCard(
+      topLabel: "Tulis jawabanmu",
+      subLabel: "Terjemahkan kalimat berikut ke Bahasa Indonesia",
+      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      questionContent: q['question'] ?? '',
+      audioUrl: q['audioUrl'] ?? '',
+      pronunciation: q['pronunciation'] ?? '',
+      actionButton: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextField(
+            controller: writingController,
+            minLines: 2,
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: "Ketik jawabanmu dalam Bahasa Indonesia...",
+              hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
+              filled: true,
+              fillColor: const Color(0xFFF8F8F8),
+              contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 14),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide.none,
               ),
-              const SizedBox(height: 14),
-              _actionButton(
-                label: "Kirim",
-                icon: Icons.check_rounded,
-                onPressed: isLoading
-                    ? null
-                    : () async {
-                  await completeLesson();
-                  setState(() {
-                    if (questionIndex < 4) {
-                      questionIndex++;
-                      segmentQuestionIndex[selectedSegment] =
-                          questionIndex;
-                    } else {
-                      segmentQuestionIndex[1] = 0;
-                      questionIndex = 0;
-                      selectedSegment = 2;
-                    }
-                  });
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Jawaban terkirim!")),
-                  );
-                },
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                const BorderSide(color: Color(0xFFE0E0E0), width: 1),
               ),
-            ],
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide:
+                const BorderSide(color: Color(0xFF2196F3), width: 1.5),
+              ),
+            ),
           ),
-        ),
-      ],
+          const SizedBox(height: 14),
+          _actionButton(
+            label: "Kirim",
+            icon: Icons.check_rounded,
+            onPressed: isLoading
+                ? null
+                : () async {
+              // Simpan jawaban user ke Firestore (untuk NLP nanti)
+              await saveUserAnswer(
+                segmen: 1,
+                index: questionIndex,
+                userAnswer: writingController.text,
+              );
+              await completeLesson();
+              writingController.clear();
+              setState(() {
+                if (questionIndex < 4) {
+                  questionIndex++;
+                  segmentQuestionIndex[selectedSegment] = questionIndex;
+                } else {
+                  segmentQuestionIndex[1] = 0;
+                  questionIndex = 0;
+                  selectedSegment = 2;
+                }
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("Jawaban terkirim!")),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 
-  // ─── SEGMEN SPEAKING (DUMMY DULU) ────────────────────────────────────────
+  // ─── SEGMEN SPEAKING ──────────────────────────────────────────────────────
 
   Widget _buildSpeakingSegment() {
+    if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
+    final q = questions[questionIndex];
+
     return _buildQuestionCard(
       topLabel: "Ucapkan dengan lantang",
       subLabel: "Baca kalimat berikut dengan jelas",
       questionTitle: "Soal ${questionIndex + 1} dari 5",
-      questionContent: "Room for one night", // dummy — nanti dari Firestore
-      hintContent: "Hint akan muncul di sini", // dummy — nanti dari Firestore
-      pronunciation: "/ruːm fər wʌn naɪt/",   // dummy — nanti dari Firestore
-      audioUrl: '',
-      actionButton: _actionButton(
-        label: "Mulai Berbicara",
-        icon: Icons.mic_rounded,
-        onPressed: isLoading
-            ? null
-            : () async {
-          await completeLesson();
-          setState(() {
-            if (questionIndex < 4) {
-              questionIndex++;
-              segmentQuestionIndex[selectedSegment] = questionIndex;
-            } else {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Semua soal selesai!")),
-              );
-            }
-          });
-        },
+      questionContent: q['question'] ?? '',
+      audioUrl: q['audioUrl'] ?? '',
+      pronunciation: q['pronunciation'] ?? '',
+      actionButton: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ── Info STT (non-aktif dulu) ─────────────────────────────
+          Container(
+            width: double.infinity,
+            padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F5F5),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.mic_off_rounded,
+                    size: 18, color: Color(0xFFAAAAAA)),
+                SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    "Speech-to-Text (VOSK) akan aktif setelah integrasi selesai",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFFAAAAAA),
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+
+          // TODO: aktifkan setelah VOSK terintegrasi
+          // saveUserAnswer(segmen: 2, index: questionIndex, userAnswer: hasilSTT)
+          _actionButton(
+            label: "Mulai Berbicara",
+            icon: Icons.mic_rounded,
+            onPressed: isLoading
+                ? null
+                : () async {
+              await completeLesson();
+              setState(() {
+                if (questionIndex < 4) {
+                  questionIndex++;
+                  segmentQuestionIndex[selectedSegment] = questionIndex;
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text("Semua soal selesai!")),
+                  );
+                }
+              });
+            },
+          ),
+        ],
       ),
     );
   }
@@ -716,7 +769,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                                 boxShadow: isActive
                                     ? [
                                   BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
+                                    color:
+                                    Colors.black.withOpacity(0.08),
                                     blurRadius: 4,
                                     offset: const Offset(0, 1),
                                   ),

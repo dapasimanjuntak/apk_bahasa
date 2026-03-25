@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'login_screen.dart';
+import 'package:provider/provider.dart';
+import 'language_service.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       backgroundColor: Colors.white,
 
@@ -27,9 +30,9 @@ class SettingsScreen extends StatelessWidget {
 
                 const SizedBox(height: 10),
 
-                const Text(
-                  "Settings",
-                  style: TextStyle(
+                Text(
+                  lang.t('settings_title'),
+                  style: const TextStyle(
                     fontSize: 26,
                     fontWeight: FontWeight.bold,
                   ),
@@ -37,9 +40,9 @@ class SettingsScreen extends StatelessWidget {
 
                 const SizedBox(height: 6),
 
-                const Text(
-                  "Manage your account preferences",
-                  style: TextStyle(
+                Text(
+                  lang.t('set_info'),
+                  style: const TextStyle(
                     color: Colors.black54,
                   ),
                 ),
@@ -67,12 +70,12 @@ class SettingsScreen extends StatelessWidget {
                       children: [
 
                         Row(
-                          children: const [
-                            Icon(Icons.person, size: 28),
-                            SizedBox(width: 10),
+                          children: [
+                            const Icon(Icons.person, size: 28),
+                            const SizedBox(width: 10),
                             Text(
-                              "Profile Information",
-                              style: TextStyle(
+                              lang.t('profile_info'),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -82,16 +85,16 @@ class SettingsScreen extends StatelessWidget {
 
                         const SizedBox(height: 6),
 
-                        const Text(
-                          "Update your personal details",
-                          style: TextStyle(color: Colors.black54),
+                        Text(
+                         lang.t('update_details'),
+                          style: const TextStyle(color: Colors.black54),
                         ),
 
                         const SizedBox(height: 18),
 
-                        const Text(
-                          "Name",
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                        Text(
+                          lang.t('name'),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
 
                         const SizedBox(height: 6),
@@ -109,9 +112,9 @@ class SettingsScreen extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          "Email",
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                         Text(
+                          lang.t('email'),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
 
                         const SizedBox(height: 6),
@@ -123,9 +126,9 @@ class SettingsScreen extends StatelessWidget {
 
                         const SizedBox(height: 6),
 
-                        const Text(
-                          "Email cannot be changed",
-                          style: TextStyle(
+                        Text(
+                          lang.t('email_cannot_change'),
+                          style: const TextStyle(
                             color: Colors.black45,
                             fontSize: 12,
                           ),
@@ -158,12 +161,12 @@ class SettingsScreen extends StatelessWidget {
                       children: [
 
                         Row(
-                          children: const [
-                            Icon(Icons.language, size: 28),
-                            SizedBox(width: 10),
+                          children: [
+                           const Icon(Icons.language, size: 28),
+                           const SizedBox(width: 10),
                             Text(
-                              "Language Preferences",
-                              style: TextStyle(
+                             lang.t('language_pref'),
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -173,22 +176,22 @@ class SettingsScreen extends StatelessWidget {
 
                         const SizedBox(height: 6),
 
-                        const Text(
-                          "Choose your language",
-                          style: TextStyle(color: Colors.black54),
+                        Text(
+                            lang.t('choose_language'),
+                          style: const TextStyle(color: Colors.black54),
                         ),
 
                         const SizedBox(height: 18),
 
-                        const Text(
-                          "Recent Language:",
-                          style: TextStyle(fontWeight: FontWeight.w500),
+                        Text(
+                          lang.t('recent_language'),
+                          style: const TextStyle(fontWeight: FontWeight.w500),
                         ),
 
                         const SizedBox(height: 8),
 
                         DropdownButtonFormField<String>(
-                          value: "English",
+                          value: lang.currentLang,
                           decoration: InputDecoration(
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(10),
@@ -198,23 +201,31 @@ class SettingsScreen extends StatelessWidget {
                           ),
                           items: const [
                             DropdownMenuItem(
-                              value: "English",
+                              value: 'en',
                               child: Text("English"),
                             ),
                             DropdownMenuItem(
-                              value: "Spanish",
-                              child: Text("Spanish"),
+                              value: 'id',
+                              child: Text("Bahasa Indonesia"),
                             ),
                             DropdownMenuItem(
-                              value: "Russian",
-                              child: Text("Russian"),
+                              value: 'es',
+                              child: Text("Español"),
                             ),
                             DropdownMenuItem(
-                              value: "Chinese",
-                              child: Text("Chinese"),
+                              value: 'ru',
+                              child: Text("Русский язык"),
+                            ),
+                            DropdownMenuItem(
+                              value: 'zh',
+                              child: Text("中文"),
                             ),
                           ],
-                          onChanged: (value) {},
+                          onChanged: (value) {
+                            if (value != null) {
+                              lang.changeLanguage(value);
+                            }
+                          },
                         ),
 
                         const SizedBox(height: 18),
@@ -225,9 +236,9 @@ class SettingsScreen extends StatelessWidget {
                             color: Colors.red.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: const Text(
-                            "Note:\nChanging your language will apply to all new lessons.",
-                            style: TextStyle(
+                          child: Text(
+                            lang.t('note_language_change'),
+                            style: const TextStyle(
                               color: Colors.red,
                               fontSize: 13,
                             ),
@@ -261,9 +272,9 @@ class SettingsScreen extends StatelessWidget {
                             ),
                           );
                         },
-                        child: const Text(
-                          "Save Changes",
-                          style: TextStyle(
+                        child: Text(
+                          lang.t('save_changes'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                           ),

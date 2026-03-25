@@ -5,6 +5,8 @@ import 'settings_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/wiki_screen.dart';
+import 'package:provider/provider.dart';
+import 'language_service.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -13,6 +15,7 @@ class HomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final uid = user?.uid;
+    final lang = Provider.of<LanguageService>(context);
 
     // ⬇️ CEK USER LOGIN
     if (uid == null) {
@@ -160,7 +163,7 @@ class HomeScreen extends StatelessWidget {
 
                             // Welcome + Username
                             Text(
-                              "Welcome, $username",
+                              lang.t('welcome_user', params: {'name': username}),
                               style: const TextStyle(
                                 fontSize: 20,
                                 fontWeight: FontWeight.bold,
@@ -180,9 +183,9 @@ class HomeScreen extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          "Overall Progress",
-                          style: TextStyle(
+                        Text(
+                          lang.t('info_home_1'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -227,9 +230,9 @@ class HomeScreen extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          "Quiz Performance",
-                          style: TextStyle(
+                        Text(
+                          lang.t('quiz_info_1'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -269,12 +272,12 @@ class HomeScreen extends StatelessWidget {
                       children: [
                         // Icon + Judul
                         Row(
-                          children: const [
-                            Icon(Icons.school, color: Colors.white, size: 28),
-                            SizedBox(width: 10),
+                          children:[
+                            const Icon(Icons.school, color: Colors.white, size: 28),
+                           const SizedBox(width: 10),
                             Text(
-                              "Start your journey",
-                              style: TextStyle(
+                              lang.t('info_home_2'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -285,9 +288,9 @@ class HomeScreen extends StatelessWidget {
 
                         const SizedBox(height: 16),
 
-                        const Text(
-                          "Begin learning indonesian today",
-                          style: TextStyle(
+                        Text(
+                          lang.t('info_home_3'),
+                          style: const TextStyle(
                             color: Colors.white,
                             fontSize: 16,
                           ),
@@ -295,11 +298,11 @@ class HomeScreen extends StatelessWidget {
 
                         const SizedBox(height: 12),
 
-                        const Text(
-                          "Choose from 18 lessons across 3 difficulty levels."
-                              " Learn essential phrases for airports, hotels, restaurants, shopping, "
-                              "transportation, and medical facilities.",
-                          style: TextStyle(
+                        Text(
+                          '${lang.t('info_home_4')}\n'
+                              '${lang.t('info_home_5')}\n'
+                              '${lang.t('info_home_6')}',
+                          style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 14,
                           ),
@@ -328,9 +331,9 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            child: const Text(
-                              "Start Learning",
-                              style: TextStyle(
+                            child: Text(
+                              lang.t('button_learn'),
+                              style: const TextStyle(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -377,9 +380,9 @@ class HomeScreen extends StatelessWidget {
 
                         const SizedBox(height: 6),
 
-                        const Text(
-                          "Discover Indonesia",
-                          style: TextStyle(
+                        Text(
+                          lang.t('info_home_7'),
+                          style: const TextStyle(
                             color: Colors.black54,
                           ),
                         ),
@@ -387,30 +390,30 @@ class HomeScreen extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         Row(
-                          children: const [
-                            Icon(Icons.add, size: 18),
-                            SizedBox(width: 8),
-                            Text("Popular destination"),
+                          children:  [
+                           const Icon(Icons.add, size: 18),
+                           const  SizedBox(width: 8),
+                            Text(lang.t('info_home_8')),
                           ],
                         ),
 
                         const SizedBox(height: 8),
 
                         Row(
-                          children: const [
-                            Icon(Icons.add, size: 18),
-                            SizedBox(width: 8),
-                            Text("Travel Tips"),
+                          children:  [
+                            const Icon(Icons.add, size: 18),
+                            const SizedBox(width: 8),
+                            Text(lang.t('info_home_9')),
                           ],
                         ),
 
                         const SizedBox(height: 8),
 
                         Row(
-                          children: const [
-                            Icon(Icons.add, size: 18),
+                          children:  [
+                            const Icon(Icons.add, size: 18),
                             SizedBox(width: 8),
-                            Text("Emergency phrases"),
+                            Text(lang.t('info_home_10')),
                           ],
                         ),
 
@@ -427,9 +430,9 @@ class HomeScreen extends StatelessWidget {
                                 ),
                               );
                             },
-                            child: const Text(
-                              "Explore Wiki",
-                              style: TextStyle(
+                            child: Text(
+                              lang.t('info_home_11'),
+                              style: const TextStyle(
                                 color: Colors.black,
                                 fontWeight: FontWeight.bold,
                               ),

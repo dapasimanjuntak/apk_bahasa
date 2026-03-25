@@ -211,6 +211,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'email': email,
                                   'level': 1,
                                   'progress': 0.0,
+                                  'currentLevel': 'beginner',
+                                  'currentScenario': 'airport',
+                                  'currentType': 'listening',
+                                  'completedLessons': [],
+                                  'completedScenarios': [],
                                   'createdAt': FieldValue.serverTimestamp(),
                                 });
                               } else {

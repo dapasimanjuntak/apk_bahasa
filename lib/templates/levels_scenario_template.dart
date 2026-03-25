@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'learning_template.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import '../screens/language_service.dart';
 
 class LevelScenarioTemplate extends StatelessWidget {
   final String levelTitle;
@@ -15,8 +17,8 @@ class LevelScenarioTemplate extends StatelessWidget {
   });
 
   // ─── URL GAMBAR SESUAI NAMA SKENARIO ──────────────────────────────────────
-  String _getImageUrl(String title) {
-    switch (title.toLowerCase()) {
+  String _getImageUrl(String key) {
+    switch (key.toLowerCase()) {
       case 'airport':
         return 'https://cdn-icons-png.flaticon.com/512/4336/4336554.png';
       case 'hotel':
@@ -35,8 +37,8 @@ class LevelScenarioTemplate extends StatelessWidget {
   }
 
   // ─── WARNA AKSEN TIAP SKENARIO ────────────────────────────────────────────
-  Color _getAccentColor(String title) {
-    switch (title.toLowerCase()) {
+  Color _getAccentColor(String key) {
+    switch (key.toLowerCase()) {
       case 'airport':
         return const Color(0xFF42A5F5); // biru langit
       case 'hotel':
@@ -56,19 +58,14 @@ class LevelScenarioTemplate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     final scenarios = [
-      {"title": "Airport", "description": "Learn airport phrases and tips."},
-      {"title": "Hotel", "description": "Useful sentences for hotel stays."},
-      {"title": "Restaurant", "description": "Dining phrases and vocabulary."},
-      {"title": "Shopping", "description": "Words and tips for shopping."},
-      {
-        "title": "Transportation",
-        "description": "Get around using transport phrases."
-      },
-      {
-        "title": "Hospital",
-        "description": "Healthcare and emergency phrases."
-      },
+      {"key": "airport"},
+      {"key": "hotel"},
+      {"key": "restaurant"},
+      {"key": "shopping"},
+      {"key": "transportation"},
+      {"key": "hospital"},
     ];
 
     return Scaffold(
@@ -94,12 +91,15 @@ class LevelScenarioTemplate extends StatelessWidget {
             children: [
               const SizedBox(height: 20),
               ...scenarios.map((s) {
+                final key = s['key']!;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _buildScenarioCard(
                     context,
-                    s['title']!,
-                    s['description']!,
+                    lang,
+                    lang.t(key),                 // title (translated)
+                    lang.t('${key}_desc'),       // description (translated)
+                    key,                         // logic tetap pakai key
                   ),
                 );
               }).toList(),
@@ -112,9 +112,14 @@ class LevelScenarioTemplate extends StatelessWidget {
   }
 
   Widget _buildScenarioCard(
-      BuildContext context, String title, String description) {
-    final accent = _getAccentColor(title);
-    final imageUrl = _getImageUrl(title);
+      BuildContext context,
+      LanguageService lang,
+      String title,
+      String description,
+      String key,
+      ) {
+    final accent = _getAccentColor(key);
+    final imageUrl = _getImageUrl(key);
 
     return Container(
       width: double.infinity,
@@ -199,7 +204,7 @@ class LevelScenarioTemplate extends StatelessWidget {
                     .doc(user.uid)
                     .set({
                   "currentLevel": levelKey,
-                  "currentScenario": title.toLowerCase(),
+                  "currentScenario": key,
                   "currentType": "listening",
                 }, SetOptions(merge: true));
 
@@ -208,16 +213,16 @@ class LevelScenarioTemplate extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (context) => LearningTemplate(
                       level: levelKey,
-                      scenario: title.toLowerCase(),
+                      scenario: key,
                       type: "listening",
                     ),
                   ),
                 );
                 // ────────────────────────────────────────────────
               },
-              child: const Text(
-                "Start Learning",
-                style: TextStyle(
+              child: Text(
+                lang.t('start_learning'),
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
