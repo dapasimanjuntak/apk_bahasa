@@ -186,15 +186,66 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LevelScenarioTemplate(
-          levelTitle: widget.level,
-          levelKey: widget.level,
-        ),
-      ),
-      (route) => false,
+    // Hitung total nilai untuk ditampilkan
+    final total = questions.length;
+    final percent = ((correctAnswersCount / total) * 100).toInt();
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Wajib tekan tombol OK
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text('🎉 Quiz Selesai!', textAlign: TextAlign.center),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text('Nilai Akhir Anda:', style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 10),
+              Text(
+                '$percent',
+                style: TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.bold,
+                  color: percent >= 80 ? Colors.green : (percent >= 60 ? Colors.orange : Colors.red),
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text('Benar $correctAnswersCount dari $total soal', style: const TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 16),
+              const Text(
+                'Nilai Anda telah otomatis disimpan di sistem kami secara real-time.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: Colors.blue),
+              ),
+            ],
+          ),
+          actions: [
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blue,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                ),
+                onPressed: () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => LevelScenarioTemplate(
+                        levelTitle: widget.level,
+                        levelKey: widget.level,
+                      ),
+                    ),
+                    (route) => false,
+                  );
+                },
+                child: const Text('Kembali ke Menu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
