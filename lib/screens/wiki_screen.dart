@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'settings_screen.dart';
 import '../templates/wiki_info_template.dart';
+import 'language_service.dart';
+import 'package:provider/provider.dart';
 
 class WikiScreen extends StatefulWidget {
   const WikiScreen({super.key});
@@ -24,6 +26,7 @@ class _WikiScreenState extends State<WikiScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
 
       // APPBAR
@@ -125,10 +128,10 @@ class _WikiScreenState extends State<WikiScreen> {
               const SizedBox(height: 12),
 
               // TITLE
-              const Text(
-                "Indonesia Tourist Wiki",
+              Text(
+                lang.t('wiki_info1'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
@@ -137,10 +140,10 @@ class _WikiScreenState extends State<WikiScreen> {
               const SizedBox(height: 8),
 
               // DESCRIPTION
-              const Text(
-                "Explore famous destinations across Indonesia and learn useful phrases for your trip.",
+              Text(
+                lang.t('wiki_info2'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   color: Colors.black54,
                   fontSize: 14,
                 ),
@@ -157,7 +160,7 @@ class _WikiScreenState extends State<WikiScreen> {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
-                  children: const [
+                  children:  [
 
                     Icon(
                       Icons.info,
@@ -168,8 +171,8 @@ class _WikiScreenState extends State<WikiScreen> {
 
                     Expanded(
                       child: Text(
-                        "Select your destination from the dropdown above.",
-                        style: TextStyle(
+                        lang.t('wiki_info3'),
+                        style: const TextStyle(
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -181,11 +184,11 @@ class _WikiScreenState extends State<WikiScreen> {
               const SizedBox(height: 24),
 
               // TITLE DESTINATION
-              const Align(
+              Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Tourist Destinations",
-                  style: TextStyle(
+                  lang.t('wiki_info4'),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                   ),
@@ -224,28 +227,28 @@ class _WikiScreenState extends State<WikiScreen> {
               // DESTINATION CARDS
               destinationCard(
                 "Bali",
-                "Island famous for beaches, temples, and vibrant culture.",
+                lang.t('wiki_des1'),
                 "https://images.unsplash.com/photo-1537996194471-e657df975ab4",
               ),
               const SizedBox(height: 16),
 
               destinationCard(
                 "Yogyakarta",
-                "Cultural heart of Java and home of Borobudur temple.",
+                lang.t('wiki_des2'),
                 "https://images.unsplash.com/photo-1583394293214-28ded15ee548",
               ),
               const SizedBox(height: 16),
 
               destinationCard(
                 "Jakarta",
-                "Bustling capital city blending culture, business and history.",
+                lang.t('wiki_des3'),
                 "https://images.unsplash.com/photo-1601597111158-2fceff292cdc",
               ),
               const SizedBox(height: 16),
 
               destinationCard(
                 "Raja Ampat",
-                "One of the most beautiful marine paradises in the world.",
+                lang.t('wiki_des4'),
                 "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
               ),
 
@@ -264,18 +267,20 @@ class _WikiScreenState extends State<WikiScreen> {
                     children: [
 
                       Row(
-                        children: const [
-                          Icon(
+                        children: [
+                          const Icon(
                             Icons.lightbulb,
                             color: Colors.amber,
                             size: 28,
                           ),
-                          SizedBox(width: 10),
-                          Text(
-                            "General Travel Tips for Indonesia",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              lang.t('wiki_info5'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -289,8 +294,8 @@ class _WikiScreenState extends State<WikiScreen> {
                         ),
                         child: ExpansionTile(
                           tilePadding: EdgeInsets.zero,
-                          title: const Text(
-                            "Essential Tips for All Travelers",
+                          title: Text(
+                            lang.t('wiki_info6'),
                             style: TextStyle(fontSize: 14),
                           ),
                           children: [
@@ -304,36 +309,37 @@ class _WikiScreenState extends State<WikiScreen> {
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
-                                children: const [
+                                children: [
 
-                                  Text("• Learn basic Indonesian phrases - locals appreciate the effort"),
+                                  Text(lang.t('wiki_drop1')),
                                   SizedBox(height: 6),
 
-                                  Text("• Dress modestly, especially when visiting religious sites"),
+                                  Text(lang.t('wiki_drop2')),
                                   SizedBox(height: 6),
 
-                                  Text("• Always carry small bills (Rupiah) for local transactions"),
+                                  Text(lang.t('wiki_drop3')),
                                   SizedBox(height: 6),
 
-                                  Text("• Download offline maps before traveling to remote areas"),
+                                  Text(lang.t('wiki_drop4')),
                                   SizedBox(height: 6),
 
-                                  Text("• Try local street food from busy stalls (high turnover = fresh food)"),
+                                  Text(lang.t('wiki_drop5')),
                                   SizedBox(height: 6),
 
-                                  Text("• Negotiate prices at markets and with street vendors"),
+                                  Text(lang.t('wiki_drop6')),
                                   SizedBox(height: 6),
 
-                                  Text("• Use official taxis or ride-hailing apps (Gojek, Grab)"),
+                                  Text(lang.t('wiki_drop7')),
                                   SizedBox(height: 6),
 
-                                  Text("• Keep copies of important documents separately"),
+                                  Text(lang.t('wiki_drop8')),
                                   SizedBox(height: 6),
 
-                                  Text("• Purchase travel insurance before your trip"),
+                                  Text(lang.t('wiki_drop9')),
                                   SizedBox(height: 6),
 
-                                  Text("• Respect local customs and religious practices"),
+                                  Text(lang.t('wiki_drop10')),
+                                  SizedBox(height: 6),
 
                                 ],
                               ),
@@ -365,12 +371,12 @@ class _WikiScreenState extends State<WikiScreen> {
 
                       // icon + title
                       Row(
-                        children: const [
-                          Icon(Icons.phone, color: Colors.red, size: 28),
-                          SizedBox(width: 10),
+                        children: [
+                          const Icon(Icons.phone, color: Colors.red, size: 28),
+                          const SizedBox(width: 10),
                           Text(
-                            "Emergency Numbers in Indonesia",
-                            style: TextStyle(
+                            lang.t('wiki_info7'),
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
@@ -380,9 +386,9 @@ class _WikiScreenState extends State<WikiScreen> {
 
                       const SizedBox(height: 8),
 
-                      const Text(
-                        "Save these important numbers before traveling",
-                        style: TextStyle(color: Colors.black54),
+                      Text(
+                        lang.t('wiki_info8'),
+                        style: const TextStyle(color: Colors.black54),
                       ),
 
                       const SizedBox(height: 16),
@@ -395,12 +401,12 @@ class _WikiScreenState extends State<WikiScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.local_police, color: Colors.red),
-                            SizedBox(width: 12),
+                          children:  [
+                            const Icon(Icons.local_police, color: Colors.red),
+                            const SizedBox(width: 12),
                             Text(
-                              "110  —  Police",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              lang.t('wiki_em1'),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -416,12 +422,12 @@ class _WikiScreenState extends State<WikiScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.medical_services, color: Colors.red),
-                            SizedBox(width: 12),
+                          children:  [
+                            const Icon(Icons.medical_services, color: Colors.red),
+                            const SizedBox(width: 12),
                             Text(
-                              "118  — Medical Emergency",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              lang.t('wiki_em2'),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -437,12 +443,12 @@ class _WikiScreenState extends State<WikiScreen> {
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Row(
-                          children: const [
-                            Icon(Icons.local_fire_department, color: Colors.red),
-                            SizedBox(width: 12),
+                          children:  [
+                            const Icon(Icons.local_fire_department, color: Colors.red),
+                            const SizedBox(width: 12),
                             Text(
-                              "113  —  Fire Department",
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                              lang.t('wiki_em3'),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),

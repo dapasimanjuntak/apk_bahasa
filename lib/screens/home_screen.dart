@@ -27,68 +27,74 @@ class HomeScreen extends StatelessWidget {
     }
 
     return Scaffold(
+      backgroundColor: const Color(0xFFF0F4FF),
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
-        elevation: 1,
+        elevation: 0,
         titleSpacing: 0,
+        surfaceTintColor: Colors.transparent,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE8EEFF), height: 1),
+        ),
         title: Row(
           children: const [
             SizedBox(width: 16),
-            Icon(Icons.school, color: Colors.blue),
-            SizedBox(width: 8),
-            Text(
-              'ID Learning',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
+            _AppLogo(),
           ],
         ),
         actions: [
-          IconButton(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            icon: const Icon(Icons.home, color: Colors.black),
-            onPressed: () {
+          _NavIconButton(
+            icon: Icons.home_rounded,
+            onPressed: (context) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const HomeScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
               );
             },
           ),
-          IconButton(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            icon: const Icon(Icons.location_on, color: Colors.black),
-            onPressed: () {
+          _NavIconButton(
+            icon: Icons.explore_rounded,
+            onPressed: (context) {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const WikiScreen(),
-                ),
+                MaterialPageRoute(builder: (_) => const WikiScreen()),
               );
             },
           ),
           Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
+            padding: const EdgeInsets.only(right: 14),
+            child: Builder(builder: (ctx) {
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    ctx,
+                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                  );
+                },
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF4F80FF).withOpacity(0.35),
+                        blurRadius: 8,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
                   ),
-                );
-              },
-              child: const CircleAvatar(
-                radius: 16,
-                backgroundColor: Colors.grey,
-                child: Icon(Icons.person, size: 18, color: Colors.white),
-              ),
-            ),
+                  child: const Icon(Icons.person_rounded, size: 18, color: Colors.white),
+                ),
+              );
+            }),
           ),
         ],
       ),
@@ -102,7 +108,12 @@ class HomeScreen extends StatelessWidget {
         builder: (context, snapshot) {
           // ⬇️ LOADING
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
+            return const Center(
+              child: CircularProgressIndicator(
+                color: Color(0xFF4F80FF),
+                strokeWidth: 2.5,
+              ),
+            );
           }
 
           // ⬇️ CEK DOKUMEN ADA ATAU TIDAK
@@ -112,14 +123,12 @@ class HomeScreen extends StatelessWidget {
 
           // ⬇️ AMBIL DATA FIRESTORE
           final data = snapshot.data!.data() as Map<String, dynamic>;
-
           final username = data['username'] ?? 'User';
 
           // ⬇️ PERBAIKAN: AMAN UNTUK DOUBLE
           final progress = (data['progress'] ?? 0);
-          final progressValue = (progress is int)
-              ? progress.toDouble()
-              : progress.toDouble();
+          final progressValue =
+          (progress is int) ? progress.toDouble() : progress.toDouble();
 
           final firstLetter =
           username.isNotEmpty ? username[0].toUpperCase() : 'U';
@@ -128,328 +137,686 @@ class HomeScreen extends StatelessWidget {
             child: SingleChildScrollView(
               padding: EdgeInsets.fromLTRB(
                 16,
+                20,
                 16,
-                16,
-                16 + MediaQuery.of(context).padding.bottom,
+                20 + MediaQuery.of(context).padding.bottom,
               ),
               child: Column(
                 children: [
-                  // Box 1
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Row User + Welcome
-                        Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 28,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                firstLetter,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blue,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-
-                            // Welcome + Username
-                            Text(
-                              lang.t('welcome_user', params: {'name': username}),
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        // Garis putih tipis
-                        Container(
-                          height: 1,
-                          color: Colors.white.withOpacity(0.6),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          lang.t('info_home_1'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        // Progress Bar + Persen
-                        Row(
-                          children: [
-                            Expanded(
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: LinearProgressIndicator(
-                                  value: progress,
-                                  minHeight: 10,
-                                  backgroundColor: Colors.white24,
-                                  valueColor:
-                                  const AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-
-                            // ⬇️ persen
-                            Text(
-                              "${(progress * 100).toInt()}%",
-                              style: const TextStyle(color: Colors.white),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Text(
-                          "${(progress * 18).toInt()} of 18 lesson",
-                          style: TextStyle(
-                            color: Colors.white70,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          lang.t('quiz_info_1'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          children: const [
-                            Icon(Icons.emoji_events, color: Colors.amber),
-                            SizedBox(width: 8),
-                            Text(
-                              "60%",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+                  // ── Card 1: Hero / Progress Card ──────────────────────────
+                  _HeroCard(
+                    username: username,
+                    firstLetter: firstLetter,
+                    progress: progressValue,
+                    lang: lang,
                   ),
 
                   const SizedBox(height: 16),
 
-                  // Box 2
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // Icon + Judul
-                        Row(
-                          children:[
-                            const Icon(Icons.school, color: Colors.white, size: 28),
-                           const SizedBox(width: 10),
-                            Text(
-                              lang.t('info_home_2'),
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Text(
-                          lang.t('info_home_3'),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
-
-                        const SizedBox(height: 12),
-
-                        Text(
-                          '${lang.t('info_home_4')}\n'
-                              '${lang.t('info_home_5')}\n'
-                              '${lang.t('info_home_6')}',
-                          style: const TextStyle(
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        // Button Start Learning
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.blue,
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 14),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LevelScreen(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              lang.t('button_learn'),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  // ── Card 2: Start Learning ─────────────────────────────────
+                  _LearningCard(lang: lang),
 
                   const SizedBox(height: 16),
 
-                  // Box 3
-                  Container(
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Icon(
-                          Icons.location_on,
-                          size: 32,
-                          color: Colors.blue,
-                        ),
+                  // ── Card 3: Tourist Wiki ───────────────────────────────────
+                  _WikiCard(lang: lang),
 
-                        const SizedBox(height: 12),
-
-                        const Text(
-                          "Tourist Wiki",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-
-                        const SizedBox(height: 6),
-
-                        Text(
-                          lang.t('info_home_7'),
-                          style: const TextStyle(
-                            color: Colors.black54,
-                          ),
-                        ),
-
-                        const SizedBox(height: 16),
-
-                        Row(
-                          children:  [
-                           const Icon(Icons.add, size: 18),
-                           const  SizedBox(width: 8),
-                            Text(lang.t('info_home_8')),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          children:  [
-                            const Icon(Icons.add, size: 18),
-                            const SizedBox(width: 8),
-                            Text(lang.t('info_home_9')),
-                          ],
-                        ),
-
-                        const SizedBox(height: 8),
-
-                        Row(
-                          children:  [
-                            const Icon(Icons.add, size: 18),
-                            SizedBox(width: 8),
-                            Text(lang.t('info_home_10')),
-                          ],
-                        ),
-
-                        const SizedBox(height: 20),
-
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const WikiScreen(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              lang.t('info_home_11'),
-                              style: const TextStyle(
-                                color: Colors.black,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
           );
         },
       ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WIDGETS
+// ─────────────────────────────────────────────────────────────────────────────
+
+class _AppLogo extends StatelessWidget {
+  const _AppLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: const Icon(Icons.school_rounded, color: Colors.white, size: 16),
+        ),
+        const SizedBox(width: 8),
+        const Text(
+          'ID Learning',
+          style: TextStyle(
+            color: Color(0xFF1A1F36),
+            fontWeight: FontWeight.w800,
+            fontSize: 15,
+            letterSpacing: -0.3,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NavIconButton extends StatelessWidget {
+  final IconData icon;
+  final void Function(BuildContext) onPressed;
+
+  const _NavIconButton({required this.icon, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      icon: Icon(icon, color: const Color(0xFF64748B), size: 22),
+      onPressed: () => onPressed(context),
+    );
+  }
+}
+
+// ── Hero Card ─────────────────────────────────────────────────────────────────
+class _HeroCard extends StatelessWidget {
+  final String username;
+  final String firstLetter;
+  final double progress;
+  final LanguageService lang;
+
+  const _HeroCard({
+    required this.username,
+    required this.firstLetter,
+    required this.progress,
+    required this.lang,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF3A6FF7), Color(0xFF6B4FE0)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3A6FF7).withOpacity(0.40),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          // Decorative circles background
+          Positioned(
+            top: -30,
+            right: -20,
+            child: Container(
+              width: 130,
+              height: 130,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.07),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -20,
+            right: 60,
+            child: Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(22),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Avatar + Welcome Row
+                Row(
+                  children: [
+                    Container(
+                      width: 52,
+                      height: 52,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.12),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Center(
+                        child: Text(
+                          firstLetter,
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF3A6FF7),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            lang.t('welcome_user', params: {'name': username}),
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              '🔥 Keep it up!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 22),
+
+                // Divider
+                Container(
+                  height: 1,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withOpacity(0.0),
+                        Colors.white.withOpacity(0.3),
+                        Colors.white.withOpacity(0.0),
+                      ],
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Progress Section
+                Text(
+                  lang.t('info_home_1'),
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.85),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+
+                const SizedBox(height: 10),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: Stack(
+                        children: [
+                          Container(
+                            height: 8,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                          ),
+                          FractionallySizedBox(
+                            widthFactor: progress.clamp(0.0, 1.0),
+                            child: Container(
+                              height: 8,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.white.withOpacity(0.5),
+                                    blurRadius: 6,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      "${(progress * 100).toInt()}%",
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 6),
+
+                Text(
+                  "${(progress * 18).toInt()} of 18 lessons",
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.65),
+                    fontSize: 12,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Quiz Score Section
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(
+                      color: Colors.white.withOpacity(0.15),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.emoji_events_rounded,
+                          color: Colors.amber,
+                          size: 20,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            lang.t('quiz_info_1'),
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.75),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          const Text(
+                            "60%",
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Learning Card ─────────────────────────────────────────────────────────────
+class _LearningCard extends StatelessWidget {
+  final LanguageService lang;
+  const _LearningCard({required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF3A6FF7).withOpacity(0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.school_rounded,
+                    color: Colors.white, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  lang.t('info_home_2'),
+                  style: const TextStyle(
+                    color: Color(0xFF1A1F36),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          Text(
+            lang.t('info_home_3'),
+            style: const TextStyle(
+              color: Color(0xFF4A5568),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Feature list
+          _FeatureRow(text: lang.t('info_home_4')),
+          const SizedBox(height: 8),
+          _FeatureRow(text: lang.t('info_home_5')),
+          const SizedBox(height: 8),
+          _FeatureRow(text: lang.t('info_home_6')),
+
+          const SizedBox(height: 22),
+
+          // Start Learning Button
+          SizedBox(
+            width: double.infinity,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF4F80FF).withOpacity(0.4),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LevelScreen()),
+                  );
+                },
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      lang.t('button_learn'),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_rounded,
+                        color: Colors.white, size: 18),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _FeatureRow extends StatelessWidget {
+  final String text;
+  const _FeatureRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEEF3FF),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: const Icon(
+            Icons.check_rounded,
+            size: 13,
+            color: Color(0xFF4F80FF),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF4A5568),
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Wiki Card ─────────────────────────────────────────────────────────────────
+class _WikiCard extends StatelessWidget {
+  final LanguageService lang;
+  const _WikiCard({required this.lang});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEDF9F0),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(
+                  Icons.explore_rounded,
+                  color: Color(0xFF22C55E),
+                  size: 22,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                "Tourist Wiki",
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1A1F36),
+                  letterSpacing: -0.3,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            lang.t('info_home_7'),
+            style: const TextStyle(
+              color: Color(0xFF4A5568),
+              fontSize: 14,
+              height: 1.5,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          _WikiFeatureRow(text: lang.t('info_home_8')),
+          const SizedBox(height: 8),
+          _WikiFeatureRow(text: lang.t('info_home_9')),
+          const SizedBox(height: 8),
+          _WikiFeatureRow(text: lang.t('info_home_10')),
+
+          const SizedBox(height: 22),
+
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton(
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                side: const BorderSide(color: Color(0xFFDDE3FF), width: 1.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const WikiScreen()),
+                );
+              },
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    lang.t('info_home_11'),
+                    style: const TextStyle(
+                      color: Color(0xFF3A6FF7),
+                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF3A6FF7),
+                    size: 16,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _WikiFeatureRow extends StatelessWidget {
+  final String text;
+  const _WikiFeatureRow({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: const Color(0xFFEDF9F0),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: const Icon(
+            Icons.add_rounded,
+            size: 13,
+            color: Color(0xFF22C55E),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(
+              color: Color(0xFF4A5568),
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
