@@ -1,13 +1,9 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-
-=======
-import 'package:firebase_core/firebase_core.dart'; // ✅ tambahkan ini
 import 'package:firebase_auth/firebase_auth.dart';
+
 import 'screens/home_screen.dart';
->>>>>>> 937579c (update: Perbaikan di session login yang ketika setelah login lalu keluar dari aplikasi langsung terlogout karena session tidak di manage & perbaikan user experiences di login flow Loading state dan mapping error yang lebih jelas)
 import 'screens/login_screen.dart';
 import 'screens/language_service.dart';
 
@@ -15,7 +11,6 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
 
-  // 🔥 INIT LANGUAGE
   final langService = LanguageService();
   await langService.loadLanguage();
 
