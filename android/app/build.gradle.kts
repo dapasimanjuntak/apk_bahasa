@@ -9,7 +9,6 @@ plugins {
 android {
     namespace = "com.bahasa.apk_bahasa_baru"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

@@ -14,21 +14,15 @@ class NlpQuizService {
   final FirebaseFirestore _firestore;
   final http.Client _client;
 
-  static const String _backendUrl = String.fromEnvironment(
-    'NLP_BACKEND_URL',
-    defaultValue: '',
-  );
 
   Future<List<NlpQuestion>> fetchQuestions({
     required String level,
     required String scenario,
   }) async {
     final snapshot = await _firestore
-        .collection('lessons')
-        .doc(level)
-        .collection(scenario)
-        .doc('question')
-        .collection('items')
+        .collection('topics') // Mengambil dari koleksi utama 'topics'
+        .doc(scenario.toLowerCase()) // Langsung membaca nama tema (misal: 'airport')
+        .collection('items') // Di dalam tema, akan ada sub-koleksi 'items' tempat soal berada
         .get();
 
     final questions = snapshot.docs
@@ -40,22 +34,26 @@ class NlpQuizService {
   }
 
   Future<AnswerEvaluation> evaluateAnswer({
-    required String soalId,
+    required String soal,
     required String jawabanUser,
     required String jawabanBenar,
   }) async {
-    if (_backendUrl.isNotEmpty) {
+    const String apiUrl = "http://206.189.46.79:8080/evaluate";
+
+    try {
       final response = await _client.post(
-        Uri.parse(_backendUrl),
+        Uri.parse(apiUrl),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'soal_id': soalId,
+          'soal': soal,
+          'jawaban_benar': jawabanBenar,
           'jawaban_user': jawabanUser,
         }),
-      );
+      ).timeout(const Duration(seconds: 15));
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         final payload = jsonDecode(response.body) as Map<String, dynamic>;
+        
         final similarityRaw = payload['similarity'];
         final similarity = similarityRaw is num
             ? (similarityRaw > 1 ? similarityRaw / 100 : similarityRaw).toDouble()
@@ -63,17 +61,25 @@ class NlpQuizService {
 
         return AnswerEvaluation(
           similarity: similarity,
-          status: _resolveStatus(similarity, payload['status']?.toString()),
-          cleanedUserAnswer: _cleanText(jawabanUser),
-          cleanedCorrectAnswer: _cleanText(jawabanBenar),
+          status: payload['status']?.toString() ?? _resolveStatus(similarity, null),
+          cleanedUserAnswer: payload['cleaned_user']?.toString() ?? _cleanText(jawabanUser),
+          cleanedCorrectAnswer: payload['cleaned_reference']?.toString() ?? _cleanText(jawabanBenar),
+          reason: payload['reason']?.toString() ?? "Dievaluasi oleh Gemini",
         );
+      } else {
+        throw Exception("API Error: ${response.statusCode} - ${response.body}");
       }
+    } catch (e) {
+      if (e is FormatException) {
+         // silent error for debugging non json response
+      }
+      
+      // Fallback lokal jika API Error / RTO
+      return _evaluateLocally(
+        jawabanUser: jawabanUser,
+        jawabanBenar: jawabanBenar,
+      );
     }
-
-    return _evaluateLocally(
-      jawabanUser: jawabanUser,
-      jawabanBenar: jawabanBenar,
-    );
   }
 
   AnswerEvaluation _evaluateLocally({
@@ -89,6 +95,7 @@ class NlpQuizService {
       status: _resolveStatus(similarity, null),
       cleanedUserAnswer: cleanedUser,
       cleanedCorrectAnswer: cleanedCorrect,
+      reason: 'Dinilai menggunakan sistem evaluasi offline (API sedang tidak merespon).',
     );
   }
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
+import 'forgot_password_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../services/auth_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,7 +16,8 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool isSignUp = false;
-  bool isSubmitting = false;       // ✅ logic baru
+  bool isSubmitting = false;
+  bool _isGoogleLoading = false;
   bool _obscurePassword = true;
 
   final TextEditingController emailController = TextEditingController();
@@ -54,7 +57,6 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
-  // ✅ Logic baru: helper show message
   void _showMessage(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -62,7 +64,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  // ✅ Logic baru: error mapping yang lebih lengkap
   String _mapAuthError(FirebaseAuthException e, {required bool isSignUp}) {
     switch (e.code) {
       case 'email-already-in-use':
@@ -82,16 +83,8 @@ class _LoginScreenState extends State<LoginScreen>
         return 'Akun ini dinonaktifkan';
       case 'too-many-requests':
         return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
-      case 'network-request-failed':
-        return 'Koneksi internet bermasalah. Coba lagi.';
-      case 'operation-not-allowed':
-        return isSignUp
-            ? 'Pendaftaran email/password belum diaktifkan di Firebase'
-            : 'Metode login ini belum diaktifkan di Firebase';
       default:
-        return e.message?.trim().isNotEmpty == true
-            ? e.message!
-            : 'Terjadi kesalahan autentikasi';
+        return e.message ?? 'Terjadi kesalahan autentikasi';
     }
   }
 
@@ -138,18 +131,6 @@ class _LoginScreenState extends State<LoginScreen>
                 ),
               ),
             ),
-            Positioned(
-              bottom: -50,
-              right: -30,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.white.withOpacity(0.06),
-                ),
-              ),
-            ),
 
             SafeArea(
               child: Center(
@@ -161,14 +142,11 @@ class _LoginScreenState extends State<LoginScreen>
                       position: _slideAnim,
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          const SizedBox(height: 16),
-
                           // ─── Logo ───
                           Container(
-                            width: 96,
-                            height: 96,
+                            width: 80,
+                            height: 80,
                             decoration: BoxDecoration(
                               color: Colors.white,
                               shape: BoxShape.circle,
@@ -180,20 +158,11 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ],
                             ),
-                            child: ClipOval(
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: SvgPicture.asset(
-                                  'lib/widgets/Logo.svg',
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-                            ),
+                            child: const Icon(Icons.school_rounded, size: 40, color: _accent),
                           ),
 
                           const SizedBox(height: 20),
 
-                          // ─── Title menyatu dengan gradient ───
                           const Text(
                             'Indonesian for Tourist',
                             style: TextStyle(
@@ -201,18 +170,6 @@ class _LoginScreenState extends State<LoginScreen>
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
                               letterSpacing: -0.2,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                          const SizedBox(height: 6),
-
-                          Text(
-                            'Master Indonesian phrases in your native language',
-                            style: TextStyle(
-                              fontSize: 13.5,
-                              color: Colors.white.withOpacity(0.78),
-                              height: 1.45,
                             ),
                             textAlign: TextAlign.center,
                           ),
@@ -245,17 +202,14 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   child: Row(
                                     children: [
-                                      _buildTab('Sign In', !isSignUp,
-                                              () => _toggleMode(false)),
-                                      _buildTab('Sign Up', isSignUp,
-                                              () => _toggleMode(true)),
+                                      _buildTab('Sign In', !isSignUp, () => _toggleMode(false)),
+                                      _buildTab('Sign Up', isSignUp, () => _toggleMode(true)),
                                     ],
                                   ),
                                 ),
 
                                 const SizedBox(height: 24),
 
-                                // Form fields
                                 if (isSignUp) ...[
                                   _buildTextField(
                                     controller: usernameController,
@@ -287,197 +241,84 @@ class _LoginScreenState extends State<LoginScreen>
                                       color: Colors.grey[400],
                                       size: 20,
                                     ),
-                                    onPressed: () => setState(() =>
-                                    _obscurePassword = !_obscurePassword),
+                                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                                   ),
                                 ),
 
-                                const SizedBox(height: 24),
-
-                                // Submit button
-                                SizedBox(
-                                  width: double.infinity,
-                                  height: 52,
-                                  child: DecoratedBox(
-                                    decoration: BoxDecoration(
-                                      gradient: isSubmitting
-                                          ? null
-                                          : const LinearGradient(
-                                        colors: [_accent, _gradientEnd],
-                                        begin: Alignment.centerLeft,
-                                        end: Alignment.centerRight,
-                                      ),
-                                      color: isSubmitting
-                                          ? const Color(0xFFB0BEC5)
-                                          : null,
-                                      borderRadius: BorderRadius.circular(14),
-                                      boxShadow: isSubmitting
-                                          ? []
-                                          : [
-                                        BoxShadow(
-                                          color: _accent.withOpacity(0.38),
-                                          blurRadius: 14,
-                                          offset: const Offset(0, 6),
-                                        ),
-                                      ],
-                                    ),
-                                    child: ElevatedButton(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.transparent,
-                                        shadowColor: Colors.transparent,
-                                        disabledBackgroundColor:
-                                        Colors.transparent,
-                                        shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                          BorderRadius.circular(14),
-                                        ),
-                                      ),
-                                      // ✅ Logic baru: isSubmitting guard
-                                      onPressed: isSubmitting
-                                          ? null
-                                          : () async {
-                                        setState(() =>
-                                        isSubmitting = true);
-
-                                        final email =
-                                        emailController.text.trim();
-                                        final password =
-                                        passwordController.text
-                                            .trim();
-                                        final username =
-                                        usernameController.text
-                                            .trim();
-
-                                        if (email.isEmpty ||
-                                            password.isEmpty) {
-                                          _showMessage(
-                                              "Email dan password wajib diisi");
-                                          if (mounted)
-                                            setState(() =>
-                                            isSubmitting = false);
-                                          return;
-                                        }
-                                        if (isSignUp &&
-                                            username.isEmpty) {
-                                          _showMessage(
-                                              "Username wajib diisi");
-                                          if (mounted)
-                                            setState(() =>
-                                            isSubmitting = false);
-                                          return;
-                                        }
-                                        try {
-                                          if (isSignUp) {
-                                            final userCredential =
-                                            await FirebaseAuth
-                                                .instance
-                                                .createUserWithEmailAndPassword(
-                                              email: email,
-                                              password: password,
-                                            );
-
-                                            final user =
-                                            userCredential.user!;
-                                            await user
-                                                .updateDisplayName(
-                                                username);
-                                            await user.reload();
-                                            final uid = user.uid;
-                                            await FirebaseFirestore
-                                                .instance
-                                                .collection('users')
-                                                .doc(uid)
-                                                .set({
-                                              'uid': uid,
-                                              'username': username,
-                                              'email': email,
-                                              'level': 1,
-                                              'progress': 0.0,
-                                              'currentLevel': 'beginner',
-                                              'currentScenario':
-                                              'airport',
-                                              'currentType': 'listening',
-                                              'completedLessons': [],
-                                              'completedScenarios': [],
-                                              'createdAt': FieldValue
-                                                  .serverTimestamp(),
-                                            });
-                                          } else {
-                                            await FirebaseAuth.instance
-                                                .signInWithEmailAndPassword(
-                                              email: email,
-                                              password: password,
-                                            );
-                                          }
-
-                                          // ✅ Logic baru: mounted check
-                                          if (!mounted) return;
-                                          Navigator.pushReplacement(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (_) =>
-                                                const HomeScreen()),
-                                          );
-                                        } on FirebaseAuthException catch (e) {
-                                          // ✅ Logic baru: _mapAuthError
-                                          _showMessage(_mapAuthError(e,
-                                              isSignUp: isSignUp));
-                                        } catch (e) {
-                                          // ✅ Logic baru: generic catch
-                                          _showMessage(
-                                              "Terjadi kesalahan. Coba lagi.");
-                                        } finally {
-                                          // ✅ Logic baru: finally block
-                                          if (mounted) {
-                                            setState(() =>
-                                            isSubmitting = false);
-                                          }
-                                        }
+                                if (!isSignUp) 
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: TextButton(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
+                                        );
                                       },
-                                      // ✅ Logic baru: loading indicator
-                                      child: isSubmitting
-                                          ? const SizedBox(
-                                        width: 20,
-                                        height: 20,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2.2,
-                                          valueColor:
-                                          AlwaysStoppedAnimation<
-                                              Color>(Colors.white),
-                                        ),
-                                      )
-                                          : Text(
-                                        isSignUp
-                                            ? 'Create Account'
-                                            : 'Sign In',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16,
-                                          fontWeight: FontWeight.w700,
-                                          letterSpacing: 0.2,
-                                        ),
-                                      ),
+                                      child: const Text('Forgot Password?', style: TextStyle(color: _accent)),
                                     ),
+                                  ),
+
+                                const SizedBox(height: 20),
+
+                                // Submit Button
+                                SizedBox(
+                                  height: 52,
+                                  child: ElevatedButton(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: _accent,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                      elevation: 0,
+                                    ),
+                                    onPressed: isSubmitting ? null : _handleSubmit,
+                                    child: isSubmitting
+                                        ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
+                                        : Text(isSignUp ? 'Create Account' : 'Sign In', 
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                                  ),
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // OR Divider
+                                Row(
+                                  children: [
+                                    const Expanded(child: Divider()),
+                                    Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                                      child: Text('OR', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                                    ),
+                                    const Expanded(child: Divider()),
+                                  ],
+                                ),
+
+                                const SizedBox(height: 16),
+
+                                // Google Sign In Button
+                                SizedBox(
+                                  height: 52,
+                                  child: OutlinedButton(
+                                    style: OutlinedButton.styleFrom(
+                                      padding: const EdgeInsets.symmetric(vertical: 13),
+                                      side: BorderSide(color: Colors.grey[200]!),
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                                    ),
+                                    onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+                                    child: _isGoogleLoading
+                                        ? const CircularProgressIndicator(strokeWidth: 2)
+                                        : Row(
+                                            mainAxisAlignment: MainAxisAlignment.center,
+                                            children: const [
+                                              Icon(Icons.login, size: 20, color: Colors.blue),
+                                              SizedBox(width: 10),
+                                              Text('Continue with Google', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
+                                            ],
+                                          ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-
-                          const SizedBox(height: 24),
-
-                          // Footer
-                          Text(
-                            'Learn Indonesian — one phrase at a time 🇮🇩',
-                            style: TextStyle(
-                              fontSize: 12.5,
-                              color: Colors.white.withOpacity(0.65),
-                              fontStyle: FontStyle.italic,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-
-                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
@@ -491,83 +332,93 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
+  Future<void> _handleSubmit() async {
+    setState(() => isSubmitting = true);
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
+    final username = usernameController.text.trim();
+
+    if (email.isEmpty || password.isEmpty || (isSignUp && username.isEmpty)) {
+      _showMessage("Semua kolom wajib diisi");
+      setState(() => isSubmitting = false);
+      return;
+    }
+
+    try {
+      if (isSignUp) {
+        final cred = await FirebaseAuth.instance.createUserWithEmailAndPassword(email: email, password: password);
+        await cred.user!.updateDisplayName(username);
+        await FirebaseFirestore.instance.collection('users').doc(cred.user!.uid).set({
+          'uid': cred.user!.uid,
+          'username': username,
+          'email': email,
+          'level': 1,
+          'progress': 0.0,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } else {
+        await FirebaseAuth.instance.signInWithEmailAndPassword(email: email, password: password);
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+    } on FirebaseAuthException catch (e) {
+      _showMessage(_mapAuthError(e, isSignUp: isSignUp));
+    } catch (e) {
+      _showMessage("Terjadi kesalahan: $e");
+    } finally {
+      if (mounted) setState(() => isSubmitting = false);
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    setState(() => _isGoogleLoading = true);
+    try {
+      final user = await AuthService.signInWithGoogle();
+      if (!mounted) return;
+      if (user != null) {
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
+      }
+    } catch (e) {
+      _showMessage("Google Sign-In gagal: $e");
+    } finally {
+      if (mounted) setState(() => _isGoogleLoading = false);
+    }
+  }
+
   Widget _buildTab(String label, bool active, VoidCallback onTap) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeInOut,
+          duration: const Duration(milliseconds: 200),
           padding: const EdgeInsets.symmetric(vertical: 11),
           decoration: BoxDecoration(
-            gradient: active
-                ? const LinearGradient(
-              colors: [_accent, _gradientEnd],
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-            )
-                : null,
-            color: active ? null : Colors.transparent,
+            color: active ? Colors.white : Colors.transparent,
             borderRadius: BorderRadius.circular(11),
-            boxShadow: active
-                ? [
-              BoxShadow(
-                color: _accent.withOpacity(0.28),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              )
-            ]
-                : [],
+            boxShadow: active ? [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2))] : [],
           ),
           child: Center(
-            child: Text(
-              label,
-              style: TextStyle(
-                color: active ? Colors.white : Colors.grey[500],
-                fontWeight: active ? FontWeight.w700 : FontWeight.w500,
-                fontSize: 15,
-              ),
-            ),
+            child: Text(label, style: TextStyle(color: active ? _accent : Colors.grey[500], fontWeight: FontWeight.bold)),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required IconData icon,
-    bool obscureText = false,
-    TextInputType? keyboardType,
-    Widget? suffixIcon,
-  }) {
+  Widget _buildTextField({required TextEditingController controller, required String label, required IconData icon, bool obscureText = false, TextInputType? keyboardType, Widget? suffixIcon}) {
     return TextField(
       controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(fontSize: 15, color: Color(0xFF1A1F36)),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
         prefixIcon: Icon(icon, color: _accent, size: 20),
         suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFFF4F6FF),
-        contentPadding:
-        const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: _accent, width: 1.5),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: Color(0xFFDDE3FF), width: 1),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: BorderSide.none),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(13), borderSide: const BorderSide(color: _accent, width: 1.5)),
       ),
     );
   }

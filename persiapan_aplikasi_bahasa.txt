@@ -1,0 +1,60 @@
+=============================================================================
+PERSIAPAN UNTUK APLIKASI BELAJAR BAHASA INDONESIA (FLUTTER + FIREBASE + NLP)
+=============================================================================
+
+Karena kerangka awal (Flutter + Firebase) sudah ada, berikut adalah hal-hal
+detail yang perlu Anda siapkan atau pastikan sudah aktif agar kita bisa 
+langsung mulai mengembangkan fitur intinya:
+
+1. PERSIAPAN FIREBASE (Backend & Database)
+   --------------------------------------------------------------------------
+   [ ] Pastikan fitur "Authentication" sudah aktif di Firebase Console, dan 
+       metode sign-in "Email/Password" sudah di-enable (untuk Login, Logout, 
+       dan Lupa Password).
+   [ ] Pastikan layanan Database (sebaiknya gunakan "Cloud Firestore") sudah
+       dalam keadaan aktif dengan Aturan Keamanan (Rules) awal yang 
+       mengizinkan baca/tulis untuk user yang sudah login.
+   [ ] Buat rancangan bentuk data progress. Contohnya kita akan menyimpan 
+       data di Firestore dengan rute: 
+       Koleksi "users" -> Dokumen "UID_User" -> progress_kuis: 80, skenario_aktif: 2.
+
+2. PERSIAPAN FITUR NLP (TF-IDF)
+   --------------------------------------------------------------------------
+   [ ] Siapkan Kunci Jawaban (Skenario). Aplikasi butuh dokumen teks dasar 
+       sebagai "kunci" atau referensi dari kalimat yang benar. Misalnya: 
+       Skenario 1 - "Ayah pergi ke pasar membeli sayur".
+       Skenario 2 - "Budi sedang belajar bahasa Indonesia di rumah".
+       (Teks ini akan kita komparasi dengan jawaban user menggunakan algoritma 
+       TF-IDF dan Cosine Similarity nantinya).
+   [ ] Daftar Stopwords Bahasa Indonesia (kata hubung seperti "dan", "di", 
+       "ke", "yang" dll). Tenang saja, bagian daftar kata ini nanti bisa 
+       saya yang buatkan script Dart-nya.
+
+3. KETERSEDIAAN PACKAGE PADA FLUTTER (pubspec.yaml)
+   --------------------------------------------------------------------------
+   [ ] Pastikan konfigurasi google-services.json (untuk Android) sudah 
+       terpasang dengan benar di folder android/app/.
+   [ ] Pastikan package wajib ini sudah ada di pubspec.yaml Anda:
+       - firebase_core (untuk koneksi utama)
+       - firebase_auth (untuk login/logout/forgot password)
+       - cloud_firestore (atau firebase_database, untuk simpan progress)
+
+4. PERSIAPAN FITUR GANTI BAHASA (LOKALISASI)
+   --------------------------------------------------------------------------
+   [ ] Siapkan teks terjemahannya. Jika aplikasinya mendukung Bahasa Inggris 
+       dan Bahasa Indonesia, siapkan list kata-kata UI yang akan diubah. 
+       Misalnya:
+       - "Login" -> ID: "Masuk", EN: "Login"
+       - "Progress" -> ID: "Perkembangan", EN: "Progress"
+       - "Logout" -> ID: "Keluar", EN: "Logout"
+
+5. UI / DESAIN
+   --------------------------------------------------------------------------
+   [ ] Anda menyebutkan butuh "ganti UI sedikit". Jika ada referensi gambar 
+       atau susunan warna / tombol spesifik yang mau diubah dari file 
+       sekarang, Anda bisa menjelaskannya nanti per-halaman.
+
+=============================================================================
+Bila poin 1 dan 3 sudah aman (karena Anda bilang environment sudah jalan), 
+kita bisa langsung lanjut ngoding Logika NLP / Integrasi Quiz & Progress kapanpun!
+=============================================================================

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/language_service.dart';
@@ -41,10 +40,10 @@ class MyApp extends StatelessWidget {
           }
 
           if (snapshot.hasData) {
-            return const HomeScreen();
+            return const HomeScreen(); // ✅ sudah login
           }
 
-          return const LoginScreen();
+          return const LoginScreen(); // ✅ belum login
         },
       ),
     );

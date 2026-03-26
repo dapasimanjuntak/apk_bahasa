@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/quiz_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class LearningTemplate extends StatefulWidget {
   final String level;
@@ -30,6 +32,10 @@ class _LearningTemplateState extends State<LearningTemplate> {
   final List<int> segmentQuestionIndex = [0, 0, 0];
   final List<String> segments = ["Listening", "Writing", "Speaking"];
   final AudioPlayer player = AudioPlayer();
+  final FlutterTts flutterTts = FlutterTts();
+  final SpeechToText _speechToText = SpeechToText();
+  bool _speechEnabled = false;
+  String _wordsSpoken = "";
 
   // ─── DATA SOAL (SAMA UNTUK SEMUA SEGMEN) ─────────────────────────────────
   List<Map<String, dynamic>> questions = [];
@@ -43,11 +49,35 @@ class _LearningTemplateState extends State<LearningTemplate> {
     super.initState();
     loadProgress();
     loadQuestions();
+    _initSpeech();
+  }
+
+  void _initSpeech() async {
+    _speechEnabled = await _speechToText.initialize();
+    setState(() {});
+  }
+
+  void _startListening() async {
+    await _speechToText.listen(
+      onResult: (result) {
+        setState(() {
+          _wordsSpoken = result.recognizedWords;
+        });
+      },
+      localeId: "id_ID", // Fokus mendengarkan Bahasa Indonesia
+    );
+    setState(() {});
+  }
+
+  void _stopListening() async {
+    await _speechToText.stop();
+    setState(() {});
   }
 
   @override
   void dispose() {
     player.dispose();
+    flutterTts.stop();
     writingController.dispose();
     super.dispose();
   }
@@ -60,24 +90,19 @@ class _LearningTemplateState extends State<LearningTemplate> {
     try {
       final List<Map<String, dynamic>> loaded = [];
 
-      for (int i = 0; i < 5; i++) {
-        final doc = await FirebaseFirestore.instance
-            .collection('lessons')
-            .doc(widget.level)
-            .collection(widget.scenario)
-            .doc('question')
-            .collection('items')
-            .doc('0_$i')
-            .get();
+      final querySnapshot = await FirebaseFirestore.instance
+          .collection('topics')
+          .doc(widget.scenario) // widget.scenario diisi dengan docId, misalnya "beginner_airport"
+          .collection('items')
+          .get();
 
-        if (doc.exists) {
-          final data = doc.data() as Map<String, dynamic>;
-          loaded.add({
-            'question': data['question'] ?? '',
-            'audioUrl': data['audioUrl'] ?? '',
-            'pronunciation': data['pronunciation'] ?? '',
-          });
-        }
+      for (var doc in querySnapshot.docs) {
+        final data = doc.data();
+        loaded.add({
+          'question': data['question'] ?? data['soal'] ?? '',
+          'audioUrl': data['audioUrl'] ?? '',
+          'pronunciation': data['Pronunciation'] ?? data['pronunciation'] ?? data['jawaban_benar'] ?? '',
+        });
       }
 
       setState(() {
@@ -345,6 +370,15 @@ class _LearningTemplateState extends State<LearningTemplate> {
                     } catch (e) {
                       debugPrint("Error play audio: $e");
                     }
+                  } else if (pronunciation.isNotEmpty) { // Jika audioUrl kosong, baca teks pakai TTS!
+                    try {
+                      await player.stop();
+                      await flutterTts.setLanguage("id-ID");
+                      await flutterTts.setSpeechRate(0.85); // sedikit lambat agar jelas
+                      await flutterTts.speak(pronunciation);
+                    } catch (e) {
+                      debugPrint("Error play TTS: $e");
+                    }
                   }
                 },
                 child: Container(
@@ -603,28 +637,43 @@ class _LearningTemplateState extends State<LearningTemplate> {
       actionButton: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Info STT (non-aktif dulu) ─────────────────────────────
+          // ── Rekam Suara (Speech To Text) ─────────────────────────────
           Container(
             width: double.infinity,
-            padding:
-            const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF5F5F5),
+              color: _speechToText.isListening ? Colors.red.withOpacity(0.08) : const Color(0xFFF5F5F5),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: const Color(0xFFE0E0E0), width: 1),
+              border: Border.all(color: _speechToText.isListening ? Colors.red.withOpacity(0.5) : const Color(0xFFE0E0E0), width: 1),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(Icons.mic_off_rounded,
-                    size: 18, color: Color(0xFFAAAAAA)),
-                SizedBox(width: 10),
+                GestureDetector(
+                  onTap: _speechToText.isNotListening ? _startListening : _stopListening,
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _speechToText.isListening ? Colors.red : const Color(0xFFE0E0E0),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      _speechToText.isListening ? Icons.mic : Icons.mic_none,
+                      color: _speechToText.isListening ? Colors.white : const Color(0xFF666666),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
                 Expanded(
                   child: Text(
-                    "Speech-to-Text (VOSK) akan aktif setelah integrasi selesai",
+                    _wordsSpoken.isNotEmpty
+                        ? _wordsSpoken
+                        : _speechToText.isListening
+                            ? "Mendengarkan..."
+                            : "Tekan mikrofon & bicara...",
                     style: TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFFAAAAAA),
-                      fontStyle: FontStyle.italic,
+                      fontSize: 14,
+                      color: _wordsSpoken.isNotEmpty || _speechToText.isListening ? const Color(0xFF222222) : const Color(0xFF888888),
+                      fontStyle: _wordsSpoken.isEmpty ? FontStyle.italic : FontStyle.normal,
                     ),
                   ),
                 ),
@@ -633,14 +682,48 @@ class _LearningTemplateState extends State<LearningTemplate> {
           ),
           const SizedBox(height: 14),
 
-          // TODO: aktifkan setelah VOSK terintegrasi
-          // saveUserAnswer(segmen: 2, index: questionIndex, userAnswer: hasilSTT)
           _actionButton(
-            label: "Mulai Berbicara",
-            icon: Icons.mic_rounded,
-            onPressed: isLoading
+            label: "Kirim Suara",
+            icon: Icons.send_rounded,
+            onPressed: (isLoading || _wordsSpoken.isEmpty)
                 ? null
                 : () async {
+              // ── 1. HENTIKAN PENDENGARAN JIKA MASIH AKTIF
+              if (_speechToText.isListening) {
+                await _speechToText.stop();
+              }
+
+              // ── 2. CEK KEBENARAN SEDERHANA (HAPUS TANDA BACA & LOWERCASE)
+              final expected = (q['pronunciation'] ?? '').toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
+              final actual = _wordsSpoken.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
+              
+              // Kriteria benar: Sama persis, atau teks aktual mengandung kunci jawaban penuh
+              bool isCorrect = actual == expected || (actual.contains(expected) && expected.isNotEmpty);
+
+              if (!isCorrect) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text("❌ Kurang tepat. Anda bilang: '$_wordsSpoken'.\n\nTips: Coba ucapkan '${q['pronunciation']}'", style: const TextStyle(height: 1.4)),
+                    backgroundColor: Colors.red[700],
+                    duration: const Duration(seconds: 4),
+                  ),
+                );
+                // Biarkan mereka mencoba lagi (jangan pindah soal otomatis)
+                setState(() { _wordsSpoken = ""; });
+                return;
+              }
+
+              // ── 3. JIKA BENAR, LANJUTKAN KE SOAL BERIKUTNYA
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text("✅ Tepat sekali!", style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
+              );
+
+              await saveUserAnswer(
+                segmen: 2, // 2 = Speaking
+                index: questionIndex,
+                userAnswer: _wordsSpoken,
+              );
+              _wordsSpoken = ""; // Reset setelah dikirim
               await completeLesson();
               setState(() {
                 if (questionIndex < 4) {
@@ -648,8 +731,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   segmentQuestionIndex[selectedSegment] = questionIndex;
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Semua soal selesai!")),
+                    const SnackBar(content: Text("Semua soal selesai!")),
                   );
                 }
               });

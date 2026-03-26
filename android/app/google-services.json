@@ -12,7 +12,20 @@
           "package_name": "com.bahasa.apk_bahasa_baru"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "706326455197-9o5jtkelpadrq5anmd05glsn4iosc5ae.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.bahasa.apk_bahasa_baru",
+            "certificate_hash": "53f709f70ce2328f15c3c14157ff23653b90b231"
+          }
+        },
+        {
+          "client_id": "706326455197-68ncsvsce8tnbh6js880sa4i4kden4fc.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyDSsk9TsjkwHWPnO53lHPfzINwwJQRejzI"
@@ -20,7 +33,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "706326455197-68ncsvsce8tnbh6js880sa4i4kden4fc.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

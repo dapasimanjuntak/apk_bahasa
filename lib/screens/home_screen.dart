@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'login_screen.dart';
 import 'level_screen.dart';
 import 'settings_screen.dart';
+import 'login_screen.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/wiki_screen.dart';
@@ -17,12 +17,17 @@ class HomeScreen extends StatelessWidget {
     final uid = user?.uid;
     final lang = Provider.of<LanguageService>(context);
 
-    // ⬇️ CEK USER LOGIN
+    // ✅ CEK USER LOGIN - redirect ke LoginScreen jika tidak ada sesi
     if (uid == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginScreen()),
+          (route) => false,
+        );
+      });
       return const Scaffold(
-        body: Center(
-          child: Text("Something went wrong"),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -125,10 +130,11 @@ class HomeScreen extends StatelessWidget {
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final username = data['username'] ?? 'User';
 
-          // ⬇️ PERBAIKAN: AMAN UNTUK DOUBLE
-          final progress = (data['progress'] ?? 0);
-          final progressValue =
-          (progress is int) ? progress.toDouble() : progress.toDouble();
+          // ⬇️ AMBIL PROGRESS & QUIZ SEBAGAI DOUBLE
+          final progressValue = ((data['progress'] ?? 0) as num).toDouble();
+          final quizPercent = data.containsKey('quiz_percent') 
+              ? (data['quiz_percent'] as num).toDouble() 
+              : 0.0;
 
           final firstLetter =
           username.isNotEmpty ? username[0].toUpperCase() : 'U';
@@ -148,6 +154,7 @@ class HomeScreen extends StatelessWidget {
                     username: username,
                     firstLetter: firstLetter,
                     progress: progressValue,
+                    quizPercent: quizPercent,
                     lang: lang,
                   ),
 
@@ -232,12 +239,14 @@ class _HeroCard extends StatelessWidget {
   final String username;
   final String firstLetter;
   final double progress;
+  final double quizPercent;
   final LanguageService lang;
 
   const _HeroCard({
     required this.username,
     required this.firstLetter,
     required this.progress,
+    required this.quizPercent,
     required this.lang,
   });
 
@@ -478,9 +487,9 @@ class _HeroCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 2),
-                          const Text(
-                            "60%",
-                            style: TextStyle(
+                          Text(
+                            "${quizPercent.toInt()}%",
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 18,
                               fontWeight: FontWeight.w800,
@@ -652,8 +661,8 @@ class _FeatureRow extends StatelessWidget {
           ),
           child: const Icon(
             Icons.check_rounded,
-            size: 13,
             color: Color(0xFF4F80FF),
+            size: 14,
           ),
         ),
         const SizedBox(width: 10),
@@ -661,8 +670,9 @@ class _FeatureRow extends StatelessWidget {
           child: Text(
             text,
             style: const TextStyle(
-              color: Color(0xFF4A5568),
+              color: Color(0xFF64748B),
               fontSize: 13,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -685,7 +695,7 @@ class _WikiCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: const Color(0xFF7B5FFF).withOpacity(0.08),
             blurRadius: 20,
             offset: const Offset(0, 6),
           ),
@@ -699,32 +709,35 @@ class _WikiCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEDF9F0),
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF7B5FFF), Color(0xFFA855F7)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(
-                  Icons.explore_rounded,
-                  color: Color(0xFF22C55E),
-                  size: 22,
-                ),
+                child: const Icon(Icons.explore_rounded,
+                    color: Colors.white, size: 22),
               ),
               const SizedBox(width: 12),
-              const Text(
-                "Tourist Wiki",
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1A1F36),
-                  letterSpacing: -0.3,
+              Expanded(
+                child: Text(
+                  lang.t('info_home_7'),
+                  style: const TextStyle(
+                    color: Color(0xFF1A1F36),
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.3,
+                  ),
                 ),
               ),
             ],
           ),
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
           Text(
-            lang.t('info_home_7'),
+            lang.t('info_home_8'),
             style: const TextStyle(
               color: Color(0xFF4A5568),
               fontSize: 14,
@@ -732,22 +745,15 @@ class _WikiCard extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 14),
-
-          _WikiFeatureRow(text: lang.t('info_home_8')),
-          const SizedBox(height: 8),
-          _WikiFeatureRow(text: lang.t('info_home_9')),
-          const SizedBox(height: 8),
-          _WikiFeatureRow(text: lang.t('info_home_10')),
-
           const SizedBox(height: 22),
 
+          // Explore Wiki Button
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                side: const BorderSide(color: Color(0xFFDDE3FF), width: 1.5),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -762,61 +768,22 @@ class _WikiCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    lang.t('info_home_11'),
+                    lang.t('button_explore'),
                     style: const TextStyle(
-                      color: Color(0xFF3A6FF7),
+                      color: Color(0xFF4F80FF),
                       fontWeight: FontWeight.w700,
-                      fontSize: 14,
+                      fontSize: 15,
                     ),
                   ),
-                  const SizedBox(width: 6),
-                  const Icon(
-                    Icons.arrow_forward_rounded,
-                    color: Color(0xFF3A6FF7),
-                    size: 16,
-                  ),
+                  const SizedBox(width: 8),
+                  const Icon(Icons.arrow_forward_rounded,
+                      color: Color(0xFF4F80FF), size: 18),
                 ],
               ),
             ),
           ),
         ],
       ),
-    );
-  }
-}
-
-class _WikiFeatureRow extends StatelessWidget {
-  final String text;
-  const _WikiFeatureRow({required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          width: 20,
-          height: 20,
-          decoration: BoxDecoration(
-            color: const Color(0xFFEDF9F0),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: const Icon(
-            Icons.add_rounded,
-            size: 13,
-            color: Color(0xFF22C55E),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              color: Color(0xFF4A5568),
-              fontSize: 13,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

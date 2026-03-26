@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/answer_evaluation.dart';
 import '../models/nlp_question.dart';
 import '../services/nlp_quiz_service.dart';
@@ -35,6 +36,7 @@ class _QuizScreenState extends State<QuizScreen> {
   String? _error;
 
   AnswerEvaluation? evaluation;
+  int correctAnswersCount = 0;
 
   @override
   void initState() {
@@ -124,12 +126,11 @@ class _QuizScreenState extends State<QuizScreen> {
     }
 
     final current = questions[currentIndex];
-
     setState(() => isSubmitting = true);
 
     try {
       final result = await _quizService.evaluateAnswer(
-        soalId: current.id,
+        soal: current.soal,
         jawabanUser: userAnswer,
         jawabanBenar: current.jawabanBenar,
       );
@@ -138,17 +139,40 @@ class _QuizScreenState extends State<QuizScreen> {
       setState(() {
         evaluation = result;
         isSubmitted = true;
+        if (result.status == 'benar' || result.status == 'hampir benar') {
+          correctAnswersCount++;
+        }
       });
-    } catch (_) {
+
+      // Update Firestore progress jika soal terakhir
+      if (currentIndex == questions.length - 1) {
+        await _updateUserProgress();
+      }
+    } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal memproses jawaban. Coba lagi.')),
+        SnackBar(content: Text('Gagal memproses jawaban: $e')),
       );
     } finally {
-      if (mounted) {
-        setState(() => isSubmitting = false);
-      }
+      if (mounted) setState(() => isSubmitting = false);
     }
+  }
+
+  Future<void> _updateUserProgress() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final total = questions.length;
+    final percent = ((correctAnswersCount / total) * 100).toInt();
+
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'quiz_percent': percent,
+        'last_quiz_scenario': widget.scenario,
+        'last_quiz_level': widget.level,
+        'last_quiz_at': FieldValue.serverTimestamp(),
+      });
+    } catch (_) {}
   }
 
   void _nextQuestion() {
@@ -174,485 +198,158 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  // ─── UI ───────────────────────────────────────────────────────────────────
-
   @override
   Widget build(BuildContext context) {
-    if (isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
+    if (isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    if (_error != null) {
+    if (_error != null || questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Quiz NLP'),
-        ),
+        appBar: AppBar(title: const Text('Quiz NFL')),
         body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Text(
-              _error!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15),
-            ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(_error ?? 'Soal belum tersedia.'),
+              const SizedBox(height: 16),
+              ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba Lagi')),
+            ],
           ),
         ),
       );
     }
 
-    if (questions.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Quiz NLP'),
-        ),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Icons.quiz_outlined, size: 40, color: Colors.grey),
-                const SizedBox(height: 12),
-                const Text(
-                  'Soal belum tersedia untuk level/scenario ini.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 15, color: Color(0xFF555555)),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: _loadQuestions,
-                  child: const Text('Coba Muat Ulang'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
-
-    final totalQuestions = questions.length;
     final currentQuestion = questions[currentIndex];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: Text(
-          "${widget.scenario.toUpperCase()} Quiz",
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: Color(0xFF222222),
-          ),
-        ),
+        title: Text("${widget.scenario.toUpperCase()} Quiz"),
         backgroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Color(0xFF222222)),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Header info ────────────────────────────────────────────
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF2196F3).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const Icon(Icons.quiz_rounded,
-                        color: Color(0xFF2196F3), size: 22),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        "${widget.scenario} — ${widget.level}",
-                        style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF222222),
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        "Soal ${currentIndex + 1} dari $totalQuestions",
-                        style: const TextStyle(
-                          fontSize: 12,
-                          color: Color(0xFF888888),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            _buildQuestionCard(currentQuestion),
-
-            const SizedBox(height: 8),
-
-            if (!isSubmitted) _buildSubmitButton(),
-            if (isSubmitted) _buildResultCard(context),
-
+            // Progress Header
+            _buildHeader(),
             const SizedBox(height: 24),
+            // Question Card
+            _buildQuestionCard(currentQuestion),
+            const SizedBox(height: 16),
+            if (!isSubmitted) _buildSubmitButton(),
+            if (isSubmitted) _buildResultCard(),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: Row(
+        children: [
+          const Icon(Icons.quiz_rounded, color: Colors.blue),
+          const SizedBox(width: 12),
+          Text("Soal ${currentIndex + 1} / ${questions.length}", style: const TextStyle(fontWeight: FontWeight.bold)),
+        ],
       ),
     );
   }
 
   Widget _buildQuestionCard(NlpQuestion q) {
-    final showResult = isSubmitted;
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: showResult
-              ? _statusColor().withValues(alpha: 0.4)
-              : Colors.transparent,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: isSubmitted ? Border.all(color: _statusColor().withOpacity(0.5)) : null),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Nomor + badge tipe
-          Row(
-            children: [
-              _questionBadge(currentIndex + 1),
-              const SizedBox(width: 8),
-              _typeBadge("NLP Evaluation", const Color(0xFF2196F3)),
-              if (showResult) ...[
-                const Spacer(),
-                Icon(
-                  _statusIcon(),
-                  color: _statusColor(),
-                  size: 20,
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Teks soal
-          Text(
-            q.soal,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Jawab dengan ketik atau suara',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: _isSpeechReady ? _toggleSpeech : null,
-                icon: Icon(
-                  _isListening ? Icons.mic_off_rounded : Icons.mic_rounded,
-                  color: _isListening ? Colors.red : const Color(0xFF2196F3),
-                ),
-                tooltip: _isListening ? 'Stop rekam suara' : 'Input suara',
-              ),
-            ],
-          ),
-
+          Text(q.soal, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 20),
           TextField(
             controller: _answerController,
             enabled: !isSubmitted,
             decoration: InputDecoration(
-              hintText: "Tulis jawaban Anda...",
-              hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
-              filled: true,
-              fillColor: const Color(0xFFF8F8F8),
-              contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              hintText: "Tulis atau rekam jawaban...",
+              suffixIcon: IconButton(
+                icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: _isListening ? Colors.red : Colors.blue),
+                onPressed: _toggleSpeech,
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                    color: Color(0xFF2196F3), width: 1.5),
-              ),
-              disabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide:
-                const BorderSide(color: Color(0xFFE0E0E0), width: 1),
-              ),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             ),
           ),
-
-          // Hint & jawaban benar setelah submit
-          if (showResult) ...[
-            const SizedBox(height: 10),
-            _buildResultDetails(q),
-          ],
+          if (isSubmitted) ...[
+            const SizedBox(height: 16),
+            Text("Jawaban referensi: ${q.jawabanBenar}", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            Text("Similarity: ${(evaluation!.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)),
+          ]
         ],
       ),
     );
   }
-
-  // ─── TOMBOL SUBMIT ────────────────────────────────────────────────────────
 
   Widget _buildSubmitButton() {
     return SizedBox(
       width: double.infinity,
-      height: 50,
-      child: ElevatedButton.icon(
+      height: 52,
+      child: ElevatedButton(
+        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
         onPressed: isSubmitting ? null : submitQuiz,
-        icon: const Icon(Icons.check_rounded, size: 18),
-        label: Text(
-          isSubmitting ? 'Memproses...' : 'Kirim Jawaban',
-          style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF2196F3),
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: const Color(0xFFBDBDBD),
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
+        child: isSubmitting ? const CircularProgressIndicator(color: Colors.white) : const Text("Kirim Jawaban", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  // ─── CARD HASIL ───────────────────────────────────────────────────────────
-
-  Widget _buildResultCard(BuildContext context) {
-    final similarity = evaluation?.similarity ?? 0;
-    final percent = (similarity * 100).round();
-    final status = evaluation?.status ?? 'kurang tepat';
+  Widget _buildResultCard() {
     final color = _statusColor();
-
     return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: color)),
       child: Column(
         children: [
-          Icon(
-            _statusIcon(),
-            size: 40,
-            color: color,
-          ),
-          const SizedBox(height: 10),
-          Text(
-            "Status: ${status.toUpperCase()}",
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: color,
+          Icon(_statusIcon(), color: color, size: 40),
+          const SizedBox(height: 8),
+          Text("Status: ${evaluation!.status.toUpperCase()}", style: TextStyle(color: color, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.5),
+              borderRadius: BorderRadius.circular(12),
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Similarity: $percent%",
-            style: const TextStyle(
-              fontSize: 13,
-              color: Color(0xFF666666),
+            child: Text(
+              evaluation!.reason,
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 13, color: color, height: 1.4, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600),
             ),
           ),
           const SizedBox(height: 16),
-
-          // Tombol Next Scenario
           SizedBox(
             width: double.infinity,
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                _nextQuestion();
-              },
-              icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: Text(
-                currentIndex < questions.length - 1
-                    ? 'Soal Selanjutnya'
-                    : 'Selesai Quiz',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: color,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            child: ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: color),
+              onPressed: _nextQuestion,
+              child: Text(currentIndex < questions.length - 1 ? "Soal Berikutnya" : "Selesai", style: const TextStyle(color: Colors.white)),
             ),
-          ),
+          )
         ],
       ),
     );
   }
 
-  Widget _buildResultDetails(NlpQuestion q) {
-    final similarity = evaluation?.similarity ?? 0;
-    final percent = (similarity * 100).round();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildHintRow('Similarity: $percent% | Status: ${evaluation?.status ?? '-'}'),
-        const SizedBox(height: 6),
-        _buildHintRow('Jawaban Anda (cleaned): ${evaluation?.cleanedUserAnswer ?? '-'}'),
-        const SizedBox(height: 6),
-        _buildCorrectAnswerRow('Jawaban referensi: ${q.jawabanBenar}'),
-      ],
-    );
-  }
-
   Color _statusColor() {
-    final status = evaluation?.status ?? '';
-    if (status == 'benar') return Colors.green;
-    if (status == 'hampir benar') return Colors.orange;
+    if (evaluation == null) return Colors.grey;
+    if (evaluation!.status == 'benar') return Colors.green;
+    if (evaluation!.status == 'hampir benar') return Colors.orange;
     return Colors.red;
   }
 
   IconData _statusIcon() {
-    final status = evaluation?.status ?? '';
-    if (status == 'benar') return Icons.check_circle_rounded;
-    if (status == 'hampir benar') return Icons.info_rounded;
-    return Icons.cancel_rounded;
-  }
-
-  // ─── HELPER WIDGETS ───────────────────────────────────────────────────────
-
-  Widget _questionBadge(int number) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFFEEEEEE),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        "Q$number",
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: Color(0xFF555555),
-        ),
-      ),
-    );
-  }
-
-  Widget _typeBadge(String label, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.10),
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: color,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHintRow(String hint) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.lightbulb_outline_rounded,
-            size: 14, color: Color(0xFFFFB300)),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            "Hint: $hint",
-            style: const TextStyle(
-              fontSize: 12,
-              color: Color(0xFF888888),
-              fontStyle: FontStyle.italic,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildCorrectAnswerRow(String answer) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Icon(Icons.check_rounded, size: 14, color: Colors.green),
-        const SizedBox(width: 6),
-        Expanded(
-          child: Text(
-            "Correct answer: $answer",
-            style: const TextStyle(
-              fontSize: 12,
-              color: Colors.green,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
-    );
+    if (evaluation == null) return Icons.help;
+    if (evaluation!.status == 'benar') return Icons.check_circle;
+    if (evaluation!.status == 'hampir benar') return Icons.info;
+    return Icons.cancel;
   }
 }

@@ -137,6 +137,7 @@ class LevelScreen extends StatelessWidget {
                 context: context,
                 icon: Icons.star_rounded,
                 title: lang.t('lvl1'),
+                levelKey: 'beginner', // Kunci fix untuk Query Firestore
                 subtitle: lang.t('lvl1_sub'),
                 gradient: const [Color(0xFF43E97B), Color(0xFF38F9D7)],
                 shadowColor: Color(0xFF43E97B),
@@ -150,6 +151,7 @@ class LevelScreen extends StatelessWidget {
                 context: context,
                 icon: Icons.star_half_rounded,
                 title: lang.t('lvl2'),
+                levelKey: 'intermediate',
                 subtitle: lang.t('lvl2_sub'),
                 gradient: const [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
                 shadowColor: Color(0xFF4F80FF),
@@ -163,6 +165,7 @@ class LevelScreen extends StatelessWidget {
                 context: context,
                 icon: Icons.workspace_premium_rounded,
                 title: lang.t('lvl3'),
+                levelKey: 'expert',
                 subtitle: lang.t('lvl3_sub'),
                 gradient: const [Color(0xFFFF6B6B), Color(0xFFFFB347)],
                 shadowColor: Color(0xFFFF6B6B),
@@ -182,6 +185,7 @@ class LevelScreen extends StatelessWidget {
     required BuildContext context,
     required IconData icon,
     required String title,
+    required String levelKey,
     required String subtitle,
     required List<Color> gradient,
     required Color shadowColor,
@@ -329,7 +333,7 @@ class LevelScreen extends StatelessWidget {
                           MaterialPageRoute(
                             builder: (context) => LevelScenarioTemplate(
                               levelTitle: title,
-                              levelKey: title.toLowerCase(),
+                              levelKey: levelKey, // 👈 Menggunakan kunci statis yang tepat!
                             ),
                           ),
                         );
