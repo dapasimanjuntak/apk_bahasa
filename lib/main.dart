@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
+<<<<<<< HEAD
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 
+=======
+import 'package:firebase_core/firebase_core.dart'; // ✅ tambahkan ini
+import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/home_screen.dart';
+>>>>>>> 937579c (update: Perbaikan di session login yang ketika setelah login lalu keluar dari aplikasi langsung terlogout karena session tidak di manage & perbaikan user experiences di login flow Loading state dan mapping error yang lebih jelas)
 import 'screens/login_screen.dart';
 import 'screens/language_service.dart';
 
@@ -30,7 +36,22 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'APK Bahasa',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: const LoginScreen(), // halaman awal login
+      home: StreamBuilder<User?>(
+        stream: FirebaseAuth.instance.authStateChanges(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Scaffold(
+              body: Center(child: CircularProgressIndicator()),
+            );
+          }
+
+          if (snapshot.hasData) {
+            return const HomeScreen();
+          }
+
+          return const LoginScreen();
+        },
+      ),
     );
   }
 }

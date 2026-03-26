@@ -14,6 +14,7 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen>
     with SingleTickerProviderStateMixin {
   bool isSignUp = false;
+  bool isSubmitting = false;       // ✅ logic baru
   bool _obscurePassword = true;
 
   final TextEditingController emailController = TextEditingController();
@@ -53,6 +54,47 @@ class _LoginScreenState extends State<LoginScreen>
     super.dispose();
   }
 
+  // ✅ Logic baru: helper show message
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  // ✅ Logic baru: error mapping yang lebih lengkap
+  String _mapAuthError(FirebaseAuthException e, {required bool isSignUp}) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Email sudah digunakan';
+      case 'user-not-found':
+        return 'Akun tidak ditemukan';
+      case 'wrong-password':
+        return 'Password salah';
+      case 'invalid-credential':
+      case 'invalid-login-credentials':
+        return 'Email atau password salah';
+      case 'weak-password':
+        return 'Password terlalu lemah (min 6 karakter)';
+      case 'invalid-email':
+        return 'Format email tidak valid';
+      case 'user-disabled':
+        return 'Akun ini dinonaktifkan';
+      case 'too-many-requests':
+        return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+      case 'network-request-failed':
+        return 'Koneksi internet bermasalah. Coba lagi.';
+      case 'operation-not-allowed':
+        return isSignUp
+            ? 'Pendaftaran email/password belum diaktifkan di Firebase'
+            : 'Metode login ini belum diaktifkan di Firebase';
+      default:
+        return e.message?.trim().isNotEmpty == true
+            ? e.message!
+            : 'Terjadi kesalahan autentikasi';
+    }
+  }
+
   void _toggleMode(bool signUp) {
     setState(() => isSignUp = signUp);
     _animController.forward(from: 0);
@@ -61,7 +103,6 @@ class _LoginScreenState extends State<LoginScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      // Background = gradient biru-ungu, sama persis dengan hero card home_screen
       body: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
@@ -72,7 +113,7 @@ class _LoginScreenState extends State<LoginScreen>
         ),
         child: Stack(
           children: [
-            // Lingkaran dekoratif — identik dengan hero card di home_screen
+            // Lingkaran dekoratif
             Positioned(
               top: -60,
               right: -40,
@@ -124,7 +165,7 @@ class _LoginScreenState extends State<LoginScreen>
                         children: [
                           const SizedBox(height: 16),
 
-                          // ─── Logo dalam lingkaran putih ───
+                          // ─── Logo ───
                           Container(
                             width: 96,
                             height: 96,
@@ -152,7 +193,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 20),
 
-                          // ─── Title — putih menyatu dengan gradient ───
+                          // ─── Title menyatu dengan gradient ───
                           const Text(
                             'Indonesian for Tourist',
                             style: TextStyle(
@@ -253,19 +294,26 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 const SizedBox(height: 24),
 
-                                // Submit — gradient biru-ungu sama dengan home_screen
+                                // Submit button
                                 SizedBox(
                                   width: double.infinity,
                                   height: 52,
                                   child: DecoratedBox(
                                     decoration: BoxDecoration(
-                                      gradient: const LinearGradient(
+                                      gradient: isSubmitting
+                                          ? null
+                                          : const LinearGradient(
                                         colors: [_accent, _gradientEnd],
                                         begin: Alignment.centerLeft,
                                         end: Alignment.centerRight,
                                       ),
+                                      color: isSubmitting
+                                          ? const Color(0xFFB0BEC5)
+                                          : null,
                                       borderRadius: BorderRadius.circular(14),
-                                      boxShadow: [
+                                      boxShadow: isSubmitting
+                                          ? []
+                                          : [
                                         BoxShadow(
                                           color: _accent.withOpacity(0.38),
                                           blurRadius: 14,
@@ -277,52 +325,66 @@ class _LoginScreenState extends State<LoginScreen>
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: Colors.transparent,
                                         shadowColor: Colors.transparent,
+                                        disabledBackgroundColor:
+                                        Colors.transparent,
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(14),
+                                          borderRadius:
+                                          BorderRadius.circular(14),
                                         ),
                                       ),
-                                      onPressed: () async {
-                                        final email = emailController.text.trim();
-                                        final password =
-                                        passwordController.text.trim();
-                                        final username =
-                                        usernameController.text.trim();
+                                      // ✅ Logic baru: isSubmitting guard
+                                      onPressed: isSubmitting
+                                          ? null
+                                          : () async {
+                                        setState(() =>
+                                        isSubmitting = true);
 
-                                        if (email.isEmpty || password.isEmpty) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    "Email dan password wajib diisi")),
-                                          );
+                                        final email =
+                                        emailController.text.trim();
+                                        final password =
+                                        passwordController.text
+                                            .trim();
+                                        final username =
+                                        usernameController.text
+                                            .trim();
+
+                                        if (email.isEmpty ||
+                                            password.isEmpty) {
+                                          _showMessage(
+                                              "Email dan password wajib diisi");
+                                          if (mounted)
+                                            setState(() =>
+                                            isSubmitting = false);
                                           return;
                                         }
-                                        if (isSignUp && username.isEmpty) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            const SnackBar(
-                                                content: Text(
-                                                    "Username wajib diisi")),
-                                          );
+                                        if (isSignUp &&
+                                            username.isEmpty) {
+                                          _showMessage(
+                                              "Username wajib diisi");
+                                          if (mounted)
+                                            setState(() =>
+                                            isSubmitting = false);
                                           return;
                                         }
                                         try {
                                           if (isSignUp) {
                                             final userCredential =
-                                            await FirebaseAuth.instance
+                                            await FirebaseAuth
+                                                .instance
                                                 .createUserWithEmailAndPassword(
                                               email: email,
                                               password: password,
                                             );
 
-                                            final user = userCredential.user!;
+                                            final user =
+                                            userCredential.user!;
                                             await user
-                                                .updateDisplayName(username);
+                                                .updateDisplayName(
+                                                username);
                                             await user.reload();
-                                            final updatedUser = FirebaseAuth
-                                                .instance.currentUser;
                                             final uid = user.uid;
-                                            await FirebaseFirestore.instance
+                                            await FirebaseFirestore
+                                                .instance
                                                 .collection('users')
                                                 .doc(uid)
                                                 .set({
@@ -332,12 +394,13 @@ class _LoginScreenState extends State<LoginScreen>
                                               'level': 1,
                                               'progress': 0.0,
                                               'currentLevel': 'beginner',
-                                              'currentScenario': 'airport',
+                                              'currentScenario':
+                                              'airport',
                                               'currentType': 'listening',
                                               'completedLessons': [],
                                               'completedScenarios': [],
-                                              'createdAt':
-                                              FieldValue.serverTimestamp(),
+                                              'createdAt': FieldValue
+                                                  .serverTimestamp(),
                                             });
                                           } else {
                                             await FirebaseAuth.instance
@@ -347,6 +410,8 @@ class _LoginScreenState extends State<LoginScreen>
                                             );
                                           }
 
+                                          // ✅ Logic baru: mounted check
+                                          if (!mounted) return;
                                           Navigator.pushReplacement(
                                             context,
                                             MaterialPageRoute(
@@ -354,40 +419,37 @@ class _LoginScreenState extends State<LoginScreen>
                                                 const HomeScreen()),
                                           );
                                         } on FirebaseAuthException catch (e) {
-                                          String message = "Terjadi kesalahan";
-                                          if (e.code ==
-                                              'email-already-in-use') {
-                                            message = "Email sudah digunakan";
-                                          } else if (e.code ==
-                                              'user-not-found') {
-                                            message = "User tidak ditemukan";
-                                          } else if (e.code ==
-                                              'wrong-password') {
-                                            message = "Password salah";
-                                          } else if (e.code ==
-                                              'weak-password') {
-                                            message =
-                                            "Password terlalu lemah (min 6 karakter)";
-                                          } else if (e.code ==
-                                              'invalid-email') {
-                                            message =
-                                            "Format email tidak valid";
-                                          }
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text(message)),
-                                          );
+                                          // ✅ Logic baru: _mapAuthError
+                                          _showMessage(_mapAuthError(e,
+                                              isSignUp: isSignUp));
                                         } catch (e) {
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(
-                                                content: Text("Error: $e")),
-                                          );
+                                          // ✅ Logic baru: generic catch
+                                          _showMessage(
+                                              "Terjadi kesalahan. Coba lagi.");
+                                        } finally {
+                                          // ✅ Logic baru: finally block
+                                          if (mounted) {
+                                            setState(() =>
+                                            isSubmitting = false);
+                                          }
                                         }
                                       },
-                                      child: Text(
-                                        isSignUp ? 'Create Account' : 'Sign In',
+                                      // ✅ Logic baru: loading indicator
+                                      child: isSubmitting
+                                          ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.2,
+                                          valueColor:
+                                          AlwaysStoppedAnimation<
+                                              Color>(Colors.white),
+                                        ),
+                                      )
+                                          : Text(
+                                        isSignUp
+                                            ? 'Create Account'
+                                            : 'Sign In',
                                         style: const TextStyle(
                                           color: Colors.white,
                                           fontSize: 16,
