@@ -12,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool isSignUp = false;
+  bool isSubmitting = false;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -23,6 +24,45 @@ class _LoginScreenState extends State<LoginScreen> {
     passwordController.dispose();
     usernameController.dispose();
     super.dispose();
+  }
+
+  void _showMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  }
+
+  String _mapAuthError(FirebaseAuthException e, {required bool isSignUp}) {
+    switch (e.code) {
+      case 'email-already-in-use':
+        return 'Email sudah digunakan';
+      case 'user-not-found':
+        return 'Akun tidak ditemukan';
+      case 'wrong-password':
+        return 'Password salah';
+      case 'invalid-credential':
+      case 'invalid-login-credentials':
+        return 'Email atau password salah';
+      case 'weak-password':
+        return 'Password terlalu lemah (min 6 karakter)';
+      case 'invalid-email':
+        return 'Format email tidak valid';
+      case 'user-disabled':
+        return 'Akun ini dinonaktifkan';
+      case 'too-many-requests':
+        return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+      case 'network-request-failed':
+        return 'Koneksi internet bermasalah. Coba lagi.';
+      case 'operation-not-allowed':
+        return isSignUp
+            ? 'Pendaftaran email/password belum diaktifkan di Firebase'
+            : 'Metode login ini belum diaktifkan di Firebase';
+      default:
+        return e.message?.trim().isNotEmpty == true
+            ? e.message!
+            : 'Terjadi kesalahan autentikasi';
+    }
   }
 
   @override
@@ -170,23 +210,24 @@ class _LoginScreenState extends State<LoginScreen> {
                             backgroundColor: Colors.black,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                           ),
-                          onPressed: () async {
+                          onPressed: isSubmitting
+                              ? null
+                              : () async {
+                            setState(() => isSubmitting = true);
                             final email = emailController.text.trim();
                             final password = passwordController.text.trim();
                             final username = usernameController.text.trim();
 
                             // ✅ Validasi
                             if (email.isEmpty || password.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Email dan password wajib diisi")),
-                              );
+                              _showMessage("Email dan password wajib diisi");
+                              if (mounted) setState(() => isSubmitting = false);
                               return;
                             }
                             // ✅ Validasi jika SignUp dan username kosong
                             if (isSignUp && username.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Username wajib diisi")),
-                              );
+                              _showMessage("Username wajib diisi");
+                              if (mounted) setState(() => isSubmitting = false);
                               return;
                             }
                             try {
@@ -202,7 +243,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                 final user = userCredential.user!;
                                 await user.updateDisplayName(username);
                                 await user.reload();
-                                final updatedUser = FirebaseAuth.instance.currentUser;
                                 // ✅ Simpan data ke Firestore
                                 final uid = user.uid;
                                 await FirebaseFirestore.instance.collection('users').doc(uid).set({
@@ -227,40 +267,36 @@ class _LoginScreenState extends State<LoginScreen> {
                               }
 
                               // ✅ Kalau sukses → ke Home
+                              if (!mounted) return;
                               Navigator.pushReplacement(
                                 context,
                                 MaterialPageRoute(builder: (_) => const HomeScreen()),
                               );
 
                             } on FirebaseAuthException catch (e) {
-                              String message = "Terjadi kesalahan";
-
-                              if (e.code == 'email-already-in-use') {
-                                message = "Email sudah digunakan";
-                              } else if (e.code == 'user-not-found') {
-                                message = "User tidak ditemukan";
-                              } else if (e.code == 'wrong-password') {
-                                message = "Password salah";
-                              } else if (e.code == 'weak-password') {
-                                message = "Password terlalu lemah (min 6 karakter)";
-                              } else if (e.code == 'invalid-email') {
-                                message = "Format email tidak valid";
-                              }
-
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(message)),
-                              );
+                              _showMessage(_mapAuthError(e, isSignUp: isSignUp));
                             } catch (e) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Error: $e")),
-                              );
+                              _showMessage("Terjadi kesalahan. Coba lagi.");
+                            } finally {
+                              if (mounted) {
+                                setState(() => isSubmitting = false);
+                              }
                             }
                           },
-                          child: const Text(
-                            'Submit',
-                            style: TextStyle(color: Colors.white, fontSize: 16),
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : const Text(
+                                  'Submit',
+                                  style: TextStyle(color: Colors.white, fontSize: 16),
+                                ),
                           ),
-                        ),
                       ),
                     ],
                   ),

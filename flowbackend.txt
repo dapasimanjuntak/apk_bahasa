@@ -1,0 +1,256 @@
+FLOW BACKEND NLP (GO + GEMINI) UNTUK APK BAHASA
+Tanggal: 2026-03-25
+
+Tujuan:
+Mengevaluasi jawaban user secara otomatis dengan NLP/AI, lalu mengembalikan similarity dan status ke aplikasi Flutter.
+
+==================================================
+1) Arsitektur Umum
+==================================================
+Flutter App
+  -> POST /evaluate (Go Backend)
+      -> Validasi request
+      -> Ambil kunci jawaban dari database (Firestore)
+      -> Cleaning teks
+      -> Panggil Gemini API untuk semantic similarity
+      -> Hitung/normalisasi similarity 0.00 - 1.00
+      -> Tentukan status (benar/hampir benar/kurang tepat)
+      -> Simpan log hasil evaluasi (opsional)
+  <- Response JSON ke Flutter
+
+Catatan penting keamanan:
+- API key Gemini hanya disimpan di backend (ENV), jangan di Flutter.
+- Jangan percaya jawaban_benar dari client.
+- Client cukup kirim soal_id dan jawaban_user.
+
+==================================================
+2) Endpoint yang Dibutuhkan
+==================================================
+A. Health Check
+- Method: GET
+- Path: /health
+- Tujuan: cek backend hidup
+- Response contoh:
+  {
+    "ok": true,
+    "service": "nlp-evaluator",
+    "time": "2026-03-25T10:00:00Z"
+  }
+
+B. Evaluasi Jawaban
+- Method: POST
+- Path: /evaluate
+- Request body:
+  {
+    "soal_id": "0_1",
+    "jawaban_user": "Proses tanaman membuat makanan dari cahaya matahari"
+  }
+- Response body:
+  {
+    "similarity": 0.87,
+    "status": "benar",
+    "cleaned_user": "proses tanaman membuat makanan dari cahaya matahari",
+    "cleaned_reference": "fotosintesis adalah proses tumbuhan membuat makanan menggunakan cahaya matahari",
+    "source": "gemini"
+  }
+
+C. Input Soal (Admin CRUD) - disarankan untuk terstruktur
+- Semua endpoint admin wajib pakai auth (JWT/Firebase ID token) + role=admin
+
+1) Create soal
+- Method: POST
+- Path: /admin/questions
+- Request body:
+  {
+    "level": "beginner",
+    "scenario": "plants",
+    "soal": "Apa itu fotosintesis?",
+    "jawaban_benar": "Fotosintesis adalah proses tumbuhan membuat makanan menggunakan cahaya matahari",
+    "hint": "Proses pada daun",
+    "status": "draft"
+  }
+- Response body:
+  {
+    "id": "q_20260325_001",
+    "message": "question_created"
+  }
+
+2) Update soal
+- Method: PUT
+- Path: /admin/questions/{id}
+- Request body: field yang mau diubah (partial/full)
+- Response body:
+  {
+    "id": "q_20260325_001",
+    "message": "question_updated"
+  }
+
+3) Publish/unpublish soal
+- Method: PATCH
+- Path: /admin/questions/{id}/status
+- Request body:
+  {
+    "status": "published"
+  }
+
+4) Delete soal
+- Method: DELETE
+- Path: /admin/questions/{id}
+- Response body:
+  {
+    "id": "q_20260325_001",
+    "message": "question_deleted"
+  }
+
+5) List soal (filter)
+- Method: GET
+- Path: /admin/questions?level=beginner&scenario=plants&status=published&page=1&page_size=20
+- Response body:
+  {
+    "items": [
+      {
+        "id": "q_20260325_001",
+        "level": "beginner",
+        "scenario": "plants",
+        "soal": "Apa itu fotosintesis?",
+        "status": "published"
+      }
+    ],
+    "page": 1,
+    "page_size": 20,
+    "total": 1
+  }
+
+==================================================
+3) Struktur Data Minimal (Firestore)
+==================================================
+A. Soal
+Collection path (contoh):
+lessons/{level}/{scenario}/question/items/{soal_id}
+
+Field minimal per soal:
+- soal: string
+- jawaban_benar: string
+
+Field yang disarankan untuk admin flow:
+- level: string
+- scenario: string
+- hint: string
+- status: draft | published | archived
+- created_by: uid_admin
+- created_at: timestamp
+- updated_at: timestamp
+
+Catatan akses data ke aplikasi user:
+- App hanya boleh load soal dengan status=published
+
+B. Log Evaluasi (opsional)
+Collection path (contoh):
+users/{uid}/evaluations/{auto_id}
+
+Field minimal:
+- soal_id
+- jawaban_user
+- similarity
+- status
+- created_at
+
+==================================================
+4) Tahapan NLP di Backend
+==================================================
+Langkah 1 - Cleaning Text
+- lowercase
+- hapus tanda baca
+- rapikan spasi
+
+Langkah 2 - Ambil Reference Answer
+- berdasarkan soal_id dari database
+
+Langkah 3 - Analisis Similarity
+- kirim jawaban user + jawaban referensi ke Gemini
+- minta output JSON ketat: {"similarity": 0.xx, "reason": "..."}
+
+Langkah 4 - Guardrail Angka
+- clamp similarity ke range 0.0 - 1.0
+- jika Gemini gagal/parsing gagal -> fallback lokal (Jaccard/Cosine)
+
+Langkah 5 - Penentuan Status
+- similarity >= 0.80 => "benar"
+- 0.65 <= similarity < 0.80 => "hampir benar"
+- similarity < 0.65 => "kurang tepat"
+
+==================================================
+5) Prompt Gemini yang Disarankan
+==================================================
+System instruction (ringkas):
+"Anda evaluator jawaban pembelajaran bahasa. Bandingkan jawaban user dengan jawaban referensi secara semantik. Kembalikan JSON valid dengan field similarity (0..1) dan reason singkat. Jangan keluar dari format JSON."
+
+User payload ke model:
+- soal
+- jawaban_referensi
+- jawaban_user
+- aturan penilaian
+
+Output wajib:
+{
+  "similarity": 0.00,
+  "reason": "..."
+}
+
+==================================================
+6) Environment Variables Backend (Go)
+==================================================
+- PORT=8080
+- GEMINI_API_KEY=xxxxx
+- FIREBASE_PROJECT_ID=...
+- GOOGLE_APPLICATION_CREDENTIALS=/path/service-account.json
+- ALLOWED_ORIGINS=* (atau domain tertentu)
+
+==================================================
+7) Error Handling Standard
+==================================================
+- 400: payload tidak valid (soal_id/jawaban_user kosong)
+- 404: soal_id tidak ditemukan
+- 401: token tidak valid/tidak ada
+- 403: user bukan admin untuk endpoint /admin/*
+- 429: limit request AI tercapai
+- 500: gagal internal / gagal panggil Gemini
+
+Contoh error response:
+{
+  "error": {
+    "code": "INVALID_REQUEST",
+    "message": "soal_id dan jawaban_user wajib diisi"
+  }
+}
+
+==================================================
+8) Integrasi ke Flutter (yang sudah ada)
+==================================================
+Di Flutter service saat ini:
+- endpoint dibaca dari NLP_BACKEND_URL
+- request ke /evaluate
+- response membaca similarity + status
+- jika backend kosong/gagal, fallback lokal tetap jalan
+
+Rekomendasi final:
+- gunakan backend sebagai sumber utama nilai
+- fallback lokal hanya untuk dev/testing
+
+==================================================
+9) Checklist Siap Produksi
+==================================================
+[ ] Endpoint /health dan /evaluate aktif
+[ ] Endpoint admin CRUD soal aktif (/admin/questions)
+[ ] Auth + role admin berjalan untuk endpoint admin
+[ ] Soal user-facing hanya status=published
+[ ] Validasi input request ketat
+[ ] jawaban_benar diambil dari DB, bukan dari client
+[ ] Retry + timeout ke Gemini
+[ ] Logging dan monitoring error
+[ ] Rate limiting
+[ ] CORS disetel benar
+[ ] HTTPS aktif
+[ ] Uji beban sederhana (load test)
+
+Selesai.

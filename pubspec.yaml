@@ -38,8 +38,13 @@
     firebase_auth: ^5.3.3
     cloud_firestore: ^5.4.0
     audioplayers: ^5.0.0
+<<<<<<< HEAD
     provider: ^6.0.5
     shared_preferences: ^2.2.2
+=======
+    http: ^1.5.0
+    speech_to_text: ^7.3.0
+>>>>>>> 937579c (update: Perbaikan di session login yang ketika setelah login lalu keluar dari aplikasi langsung terlogout karena session tidak di manage & perbaikan user experiences di login flow Loading state dan mapping error yang lebih jelas)
 
   dev_dependencies:
     flutter_test:

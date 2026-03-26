@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:speech_to_text/speech_to_text.dart';
+
+import '../models/answer_evaluation.dart';
+import '../models/nlp_question.dart';
+import '../services/nlp_quiz_service.dart';
 import '../templates/levels_scenario_template.dart';
 
 class QuizScreen extends StatefulWidget {
@@ -16,132 +21,220 @@ class QuizScreen extends StatefulWidget {
 }
 
 class _QuizScreenState extends State<QuizScreen> {
-  // ─── DUMMY DATA ───────────────────────────────────────────────────────────
-  // Nanti ganti dengan query Firestore
-  // Struktur tiap soal:
-  //   type        : "listening" | "multiple_choice"
-  //   question    : teks soal
-  //   audioUrl    : URL audio (khusus listening) — nanti dari Firebase
-  //   options     : List<String> pilihan (khusus multiple_choice)
-  //   correctAnswer: jawaban benar
-  //   hint        : teks hint
+  final NlpQuizService _quizService = NlpQuizService();
+  final SpeechToText _speech = SpeechToText();
+  final TextEditingController _answerController = TextEditingController();
 
-  late final List<Map<String, dynamic>> questions = [
-    // ── 2 soal listening ──────────────────────────────────────────
-    {
-      "type": "listening",
-      "question": "Listen and type what you hear",
-      "audioUrl": "", // TODO: isi dari Firebase
-      "correctAnswer": "room for one night",
-      "hint": "Seseorang memesan kamar hotel",
-    },
-    {
-      "type": "listening",
-      "question": "Listen and type what you hear",
-      "audioUrl": "", // TODO: isi dari Firebase
-      "correctAnswer": "how much is the room",
-      "hint": "Menanyakan harga kamar",
-    },
-    // ── 3 soal pilihan ganda ──────────────────────────────────────
-    {
-      "type": "multiple_choice",
-      "question": "What do you say when you want to check in?",
-      "options": [
-        "I'd like to check in please",
-        "Can I have the bill?",
-        "Where is the exit?",
-        "I want to order food",
-      ],
-      "correctAnswer": "I'd like to check in please",
-      "hint": "Ungkapan saat tiba di hotel",
-    },
-    {
-      "type": "multiple_choice",
-      "question": "How do you ask for a single room?",
-      "options": [
-        "Give me two rooms",
-        "I need a single room please",
-        "Is there a restaurant here?",
-        "Can I see the menu?",
-      ],
-      "correctAnswer": "I need a single room please",
-      "hint": "Single = satu orang",
-    },
-    {
-      "type": "multiple_choice",
-      "question": "What does 'check-out time' mean?",
-      "options": [
-        "Waktu sarapan",
-        "Waktu harus meninggalkan kamar",
-        "Waktu membersihkan kamar",
-        "Waktu check-in",
-      ],
-      "correctAnswer": "Waktu harus meninggalkan kamar",
-      "hint": "Check-out = selesai menginap",
-    },
-  ];
-
-  // ─── STATE ────────────────────────────────────────────────────────────────
-  final Map<int, String> userAnswers = {};
-  final Map<int, TextEditingController> textControllers = {};
+  List<NlpQuestion> questions = [];
+  int currentIndex = 0;
   bool isSubmitted = false;
-  int score = 0;
+  bool isLoading = true;
+  bool isSubmitting = false;
+  bool _isSpeechReady = false;
+  bool _isListening = false;
+  String? _error;
+
+  AnswerEvaluation? evaluation;
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi controller untuk soal listening
-    for (int i = 0; i < questions.length; i++) {
-      if (questions[i]['type'] == 'listening') {
-        textControllers[i] = TextEditingController();
-      }
-    }
+    _initialize();
   }
 
   @override
   void dispose() {
-    for (final c in textControllers.values) {
-      c.dispose();
-    }
+    _answerController.dispose();
+    _speech.stop();
     super.dispose();
   }
 
-  // ─── LOGIC ────────────────────────────────────────────────────────────────
-
-  void submitQuiz() {
-    // Kumpulkan jawaban listening dari controller
-    for (int i = 0; i < questions.length; i++) {
-      if (questions[i]['type'] == 'listening') {
-        userAnswers[i] = textControllers[i]?.text.trim().toLowerCase() ?? '';
-      }
-    }
-
-    // Hitung score
-    int s = 0;
-    for (int i = 0; i < questions.length; i++) {
-      final correct =
-      (questions[i]['correctAnswer'] as String).toLowerCase().trim();
-      final answer = (userAnswers[i] ?? '').toLowerCase().trim();
-      if (answer == correct) s++;
-    }
-
-    setState(() {
-      score = s;
-      isSubmitted = true;
-    });
+  Future<void> _initialize() async {
+    await Future.wait([
+      _loadQuestions(),
+      _initSpeech(),
+    ]);
   }
 
-  bool _isCorrect(int index) {
-    final correct =
-    (questions[index]['correctAnswer'] as String).toLowerCase().trim();
-    final answer = (userAnswers[index] ?? '').toLowerCase().trim();
-    return answer == correct;
+  Future<void> _loadQuestions() async {
+    try {
+      final loaded = await _quizService.fetchQuestions(
+        level: widget.level,
+        scenario: widget.scenario,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        questions = loaded;
+        isLoading = false;
+        _error = null;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        _error = 'Gagal memuat soal. Coba lagi.';
+      });
+    }
+  }
+
+  Future<void> _initSpeech() async {
+    final available = await _speech.initialize();
+    if (!mounted) return;
+    setState(() => _isSpeechReady = available);
+  }
+
+  Future<void> _toggleSpeech() async {
+    if (!_isSpeechReady || isSubmitted) return;
+
+    if (_isListening) {
+      await _speech.stop();
+      if (!mounted) return;
+      setState(() => _isListening = false);
+      return;
+    }
+
+    final started = await _speech.listen(
+      localeId: 'id_ID',
+      onResult: (result) {
+        _answerController.text = result.recognizedWords;
+        _answerController.selection = TextSelection.fromPosition(
+          TextPosition(offset: _answerController.text.length),
+        );
+
+        if (result.finalResult && mounted) {
+          setState(() => _isListening = false);
+        }
+      },
+    );
+
+    if (!mounted) return;
+    setState(() => _isListening = started);
+  }
+
+  Future<void> submitQuiz() async {
+    if (questions.isEmpty) return;
+    final userAnswer = _answerController.text.trim();
+
+    if (userAnswer.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Silakan isi jawaban dulu.')),
+      );
+      return;
+    }
+
+    final current = questions[currentIndex];
+
+    setState(() => isSubmitting = true);
+
+    try {
+      final result = await _quizService.evaluateAnswer(
+        soalId: current.id,
+        jawabanUser: userAnswer,
+        jawabanBenar: current.jawabanBenar,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        evaluation = result;
+        isSubmitted = true;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memproses jawaban. Coba lagi.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isSubmitting = false);
+      }
+    }
+  }
+
+  void _nextQuestion() {
+    if (currentIndex < questions.length - 1) {
+      setState(() {
+        currentIndex++;
+        isSubmitted = false;
+        evaluation = null;
+        _answerController.clear();
+      });
+      return;
+    }
+
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LevelScenarioTemplate(
+          levelTitle: widget.level,
+          levelKey: widget.level,
+        ),
+      ),
+      (route) => false,
+    );
   }
 
   // ─── UI ───────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Quiz NLP'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 15),
+            ),
+          ),
+        ),
+      );
+    }
+
+    if (questions.isEmpty) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Quiz NLP'),
+        ),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.quiz_outlined, size: 40, color: Colors.grey),
+                const SizedBox(height: 12),
+                const Text(
+                  'Soal belum tersedia untuk level/scenario ini.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 15, color: Color(0xFF555555)),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: _loadQuestions,
+                  child: const Text('Coba Muat Ulang'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    final totalQuestions = questions.length;
+    final currentQuestion = questions[currentIndex];
+
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
@@ -172,7 +265,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 borderRadius: BorderRadius.circular(14),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -183,7 +276,7 @@ class _QuizScreenState extends State<QuizScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2196F3).withOpacity(0.1),
+                      color: const Color(0xFF2196F3).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.quiz_rounded,
@@ -203,7 +296,7 @@ class _QuizScreenState extends State<QuizScreen> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        "${questions.length} questions  •  2 Listening  •  3 Multiple Choice",
+                        "Soal ${currentIndex + 1} dari $totalQuestions",
                         style: const TextStyle(
                           fontSize: 12,
                           color: Color(0xFF888888),
@@ -217,19 +310,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
             const SizedBox(height: 16),
 
-            // ── Daftar soal ────────────────────────────────────────────
-            ...List.generate(questions.length, (i) {
-              final q = questions[i];
-              if (q['type'] == 'listening') {
-                return _buildListeningCard(i, q);
-              } else {
-                return _buildMultipleChoiceCard(i, q);
-              }
-            }),
+            _buildQuestionCard(currentQuestion),
 
             const SizedBox(height: 8),
 
-            // ── Tombol Submit / Hasil ──────────────────────────────────
             if (!isSubmitted) _buildSubmitButton(),
             if (isSubmitted) _buildResultCard(context),
 
@@ -240,12 +324,8 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  // ─── CARD LISTENING ───────────────────────────────────────────────────────
-
-  Widget _buildListeningCard(int index, Map<String, dynamic> q) {
+  Widget _buildQuestionCard(NlpQuestion q) {
     final showResult = isSubmitted;
-    final correct = showResult && _isCorrect(index);
-    final wrong = showResult && !_isCorrect(index);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
@@ -255,13 +335,13 @@ class _QuizScreenState extends State<QuizScreen> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: showResult
-              ? (correct ? Colors.green : Colors.red).withOpacity(0.4)
+              ? _statusColor().withValues(alpha: 0.4)
               : Colors.transparent,
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -273,14 +353,14 @@ class _QuizScreenState extends State<QuizScreen> {
           // Nomor + badge tipe
           Row(
             children: [
-              _questionBadge(index + 1),
+              _questionBadge(currentIndex + 1),
               const SizedBox(width: 8),
-              _typeBadge("Listening", const Color(0xFF2196F3)),
+              _typeBadge("NLP Evaluation", const Color(0xFF2196F3)),
               if (showResult) ...[
                 const Spacer(),
                 Icon(
-                  correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                  color: correct ? Colors.green : Colors.red,
+                  _statusIcon(),
+                  color: _statusColor(),
                   size: 20,
                 ),
               ],
@@ -290,7 +370,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
           // Teks soal
           Text(
-            q['question'],
+            q.soal,
             style: const TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w600,
@@ -299,47 +379,33 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           const SizedBox(height: 12),
 
-          // Tombol play audio
-          GestureDetector(
-            onTap: () {
-              // TODO: play audio dari q['audioUrl']
-            },
-            child: Container(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2196F3).withOpacity(0.10),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: const Color(0xFF2196F3).withOpacity(0.25),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Jawab dengan ketik atau suara',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey.shade600,
+                  ),
                 ),
               ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.play_circle_fill_rounded,
-                      color: Color(0xFF2196F3), size: 22),
-                  SizedBox(width: 8),
-                  Text(
-                    "Play Audio",
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF2196F3),
-                    ),
-                  ),
-                ],
+              IconButton(
+                onPressed: _isSpeechReady ? _toggleSpeech : null,
+                icon: Icon(
+                  _isListening ? Icons.mic_off_rounded : Icons.mic_rounded,
+                  color: _isListening ? Colors.red : const Color(0xFF2196F3),
+                ),
+                tooltip: _isListening ? 'Stop rekam suara' : 'Input suara',
               ),
-            ),
+            ],
           ),
-          const SizedBox(height: 12),
 
-          // Text input jawaban
           TextField(
-            controller: textControllers[index],
+            controller: _answerController,
             enabled: !isSubmitted,
             decoration: InputDecoration(
-              hintText: "Type what you hear...",
+              hintText: "Tulis jawaban Anda...",
               hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
               filled: true,
               fillColor: const Color(0xFFF8F8F8),
@@ -370,134 +436,7 @@ class _QuizScreenState extends State<QuizScreen> {
           // Hint & jawaban benar setelah submit
           if (showResult) ...[
             const SizedBox(height: 10),
-            _buildHintRow(q['hint']),
-            if (wrong) ...[
-              const SizedBox(height: 6),
-              _buildCorrectAnswerRow(q['correctAnswer']),
-            ],
-          ],
-        ],
-      ),
-    );
-  }
-
-  // ─── CARD MULTIPLE CHOICE ─────────────────────────────────────────────────
-
-  Widget _buildMultipleChoiceCard(int index, Map<String, dynamic> q) {
-    final showResult = isSubmitted;
-    final correct = showResult && _isCorrect(index);
-    final wrong = showResult && !_isCorrect(index);
-    final List<String> options = List<String>.from(q['options']);
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: showResult
-              ? (correct ? Colors.green : Colors.red).withOpacity(0.4)
-              : Colors.transparent,
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Nomor + badge tipe
-          Row(
-            children: [
-              _questionBadge(index + 1),
-              const SizedBox(width: 8),
-              _typeBadge("Multiple Choice", const Color(0xFF9C27B0)),
-              if (showResult) ...[
-                const Spacer(),
-                Icon(
-                  correct ? Icons.check_circle_rounded : Icons.cancel_rounded,
-                  color: correct ? Colors.green : Colors.red,
-                  size: 20,
-                ),
-              ],
-            ],
-          ),
-          const SizedBox(height: 12),
-
-          // Teks soal
-          Text(
-            q['question'],
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF333333),
-            ),
-          ),
-          const SizedBox(height: 12),
-
-          // Pilihan jawaban
-          ...options.map((option) {
-            final isSelected = userAnswers[index] == option;
-            final isCorrectOption = option == q['correctAnswer'];
-
-            Color borderColor = const Color(0xFFE0E0E0);
-            Color bgColor = Colors.white;
-            Color textColor = const Color(0xFF333333);
-
-            if (showResult) {
-              if (isCorrectOption) {
-                borderColor = Colors.green;
-                bgColor = Colors.green.withOpacity(0.08);
-                textColor = Colors.green.shade700;
-              } else if (isSelected && !isCorrectOption) {
-                borderColor = Colors.red;
-                bgColor = Colors.red.withOpacity(0.08);
-                textColor = Colors.red.shade700;
-              }
-            } else if (isSelected) {
-              borderColor = const Color(0xFF2196F3);
-              bgColor = const Color(0xFF2196F3).withOpacity(0.08);
-              textColor = const Color(0xFF1565C0);
-            }
-
-            return GestureDetector(
-              onTap: isSubmitted
-                  ? null
-                  : () => setState(() => userAnswers[index] = option),
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.only(bottom: 8),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 14, vertical: 12),
-                decoration: BoxDecoration(
-                  color: bgColor,
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: borderColor, width: 1.5),
-                ),
-                child: Text(
-                  option,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isSelected
-                        ? FontWeight.w600
-                        : FontWeight.w400,
-                    color: textColor,
-                  ),
-                ),
-              ),
-            );
-          }),
-
-          // Hint setelah submit
-          if (showResult) ...[
-            const SizedBox(height: 4),
-            _buildHintRow(q['hint']),
+            _buildResultDetails(q),
           ],
         ],
       ),
@@ -507,23 +446,14 @@ class _QuizScreenState extends State<QuizScreen> {
   // ─── TOMBOL SUBMIT ────────────────────────────────────────────────────────
 
   Widget _buildSubmitButton() {
-    final allAnswered = () {
-      for (int i = 0; i < questions.length; i++) {
-        if (questions[i]['type'] == 'multiple_choice') {
-          if (!userAnswers.containsKey(i)) return false;
-        }
-      }
-      return true;
-    }();
-
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: ElevatedButton.icon(
-        onPressed: allAnswered ? submitQuiz : null,
+        onPressed: isSubmitting ? null : submitQuiz,
         icon: const Icon(Icons.check_rounded, size: 18),
-        label: const Text(
-          "Submit Quiz",
+        label: Text(
+          isSubmitting ? 'Memproses...' : 'Kirim Jawaban',
           style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
         ),
         style: ElevatedButton.styleFrom(
@@ -542,44 +472,41 @@ class _QuizScreenState extends State<QuizScreen> {
   // ─── CARD HASIL ───────────────────────────────────────────────────────────
 
   Widget _buildResultCard(BuildContext context) {
-    final total = questions.length;
-    final percent = (score / total * 100).toInt();
-    final passed = percent >= 60;
+    final similarity = evaluation?.similarity ?? 0;
+    final percent = (similarity * 100).round();
+    final status = evaluation?.status ?? 'kurang tepat';
+    final color = _statusColor();
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: passed
-            ? Colors.green.withOpacity(0.08)
-            : Colors.orange.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: passed
-              ? Colors.green.withOpacity(0.3)
-              : Colors.orange.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1.5,
         ),
       ),
       child: Column(
         children: [
           Icon(
-            passed ? Icons.emoji_events_rounded : Icons.refresh_rounded,
+            _statusIcon(),
             size: 40,
-            color: passed ? Colors.green : Colors.orange,
+            color: color,
           ),
           const SizedBox(height: 10),
           Text(
-            passed ? "Quiz Completed!" : "Keep Practicing!",
+            "Status: ${status.toUpperCase()}",
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w700,
-              color: passed ? Colors.green.shade700 : Colors.orange.shade700,
+              color: color,
             ),
           ),
           const SizedBox(height: 4),
           Text(
-            "Score: $score / $total  ($percent%)",
+            "Similarity: $percent%",
             style: const TextStyle(
               fontSize: 13,
               color: Color(0xFF666666),
@@ -593,29 +520,20 @@ class _QuizScreenState extends State<QuizScreen> {
             height: 46,
             child: ElevatedButton.icon(
               onPressed: () {
-                // Kembali ke halaman daftar scenario
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => LevelScenarioTemplate(
-                      levelTitle: widget.level,
-                      levelKey: widget.level,
-                    ),
-                  ),
-                      (route) => false,
-                );
+                _nextQuestion();
               },
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: const Text(
-                "Next Scenario",
+              label: Text(
+                currentIndex < questions.length - 1
+                    ? 'Soal Selanjutnya'
+                    : 'Selesai Quiz',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                passed ? Colors.green : const Color(0xFF2196F3),
+                backgroundColor: color,
                 foregroundColor: Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -627,6 +545,36 @@ class _QuizScreenState extends State<QuizScreen> {
         ],
       ),
     );
+  }
+
+  Widget _buildResultDetails(NlpQuestion q) {
+    final similarity = evaluation?.similarity ?? 0;
+    final percent = (similarity * 100).round();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildHintRow('Similarity: $percent% | Status: ${evaluation?.status ?? '-'}'),
+        const SizedBox(height: 6),
+        _buildHintRow('Jawaban Anda (cleaned): ${evaluation?.cleanedUserAnswer ?? '-'}'),
+        const SizedBox(height: 6),
+        _buildCorrectAnswerRow('Jawaban referensi: ${q.jawabanBenar}'),
+      ],
+    );
+  }
+
+  Color _statusColor() {
+    final status = evaluation?.status ?? '';
+    if (status == 'benar') return Colors.green;
+    if (status == 'hampir benar') return Colors.orange;
+    return Colors.red;
+  }
+
+  IconData _statusIcon() {
+    final status = evaluation?.status ?? '';
+    if (status == 'benar') return Icons.check_circle_rounded;
+    if (status == 'hampir benar') return Icons.info_rounded;
+    return Icons.cancel_rounded;
   }
 
   // ─── HELPER WIDGETS ───────────────────────────────────────────────────────
@@ -653,7 +601,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.10),
+        color: color.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
