@@ -1,18 +1,45 @@
-# apk_bahasa_baru
+# NLP Documentation
 
-Apk Bahasa
+## Introduction
+This document provides comprehensive information about the Natural Language Processing (NLP) system, including its architecture, evaluation modes, API endpoints, data models, implementation guide, and troubleshooting.
 
-## Getting Started
+## Evaluation Modes
+### Online Evaluation
+- Description of online evaluation methods used in the NLP system.
+- Explanation of how real-time metrics are collected and interpreted.
 
-This project is a starting point for a Flutter application.
+### Offline Evaluation
+- Description of offline evaluation methods.
+- Overview of datasets used and performance metrics calculated.
 
-A few resources to get you started if this is your first Flutter project:
+## Architecture
+- Overview of the system architecture including components and workflow.
+- Diagrams illustrating the data flow within the architecture.
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+## API Endpoints
+### List of API Endpoints
+1. **POST /api/evaluate** - Submit data for evaluation.
+2. **GET /api/results/{id}** - Retrieve evaluation results.
+3. **GET /api/model/status** - Check the current status of the NLP model.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
-testing
+### Example Requests
+- Example request bodies and expected responses for each endpoint mentioned.
+
+## Data Models
+### Input Data Model
+- Definition and structure of input data expected by the API.
+
+### Output Data Model
+- Definition and structure of output data returned by the API.
+
+## Implementation Guide
+- Step-by-step instructions for setting up the NLP system.
+- Dependencies and environment setup.
+- Code examples for integration.
+
+## Troubleshooting
+- Common issues and their solutions.
+- FAQs related to the NLP system implementation and usage.
+
+## Conclusion
+This document aims to provide all necessary resources and information to effectively utilize the NLP system. For further inquiries, refer to the support section of the documentation.
