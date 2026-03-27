@@ -5,7 +5,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import '../screens/language_service.dart';
-import '../screens/upload_data_screen.dart';
 
 class LevelScenarioTemplate extends StatelessWidget {
   final String levelTitle;
@@ -48,15 +47,6 @@ class LevelScenarioTemplate extends StatelessWidget {
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Color(0xFF222222)),
-        actions: [
-          IconButton(
-            tooltip: "Suntik Data Soal Otomatis",
-            icon: const Icon(Icons.cloud_upload, color: Colors.blue),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => const UploadDataScreen()));
-            },
-          )
-        ],
       ),
       body: StreamBuilder<QuerySnapshot>(
         // 🔥 QUERY MAGIC: Cari semua topik yang berlabel level ini (misal: "beginner") di koleksi utama 'topics'

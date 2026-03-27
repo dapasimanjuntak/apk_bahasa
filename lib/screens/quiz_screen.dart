@@ -96,7 +96,7 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    final started = await _speech.listen(
+    await _speech.listen(
       localeId: 'id_ID',
       onResult: (result) {
         _answerController.text = result.recognizedWords;
@@ -111,7 +111,7 @@ class _QuizScreenState extends State<QuizScreen> {
     );
 
     if (!mounted) return;
-    setState(() => _isListening = started);
+    setState(() => _isListening = true);
   }
 
   Future<void> submitQuiz() async {
@@ -128,6 +128,22 @@ class _QuizScreenState extends State<QuizScreen> {
     final current = questions[currentIndex];
     setState(() => isSubmitting = true);
 
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: const [
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Jawabanmu sedang dianalisis...", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600)),
+          ],
+        ),
+      ),
+    );
+
     try {
       final result = await _quizService.evaluateAnswer(
         soal: current.soal,
@@ -136,6 +152,8 @@ class _QuizScreenState extends State<QuizScreen> {
       );
 
       if (!mounted) return;
+      Navigator.pop(context); // Tutup popup loading
+
       setState(() {
         evaluation = result;
         isSubmitted = true;
@@ -150,6 +168,7 @@ class _QuizScreenState extends State<QuizScreen> {
       }
     } catch (e) {
       if (!mounted) return;
+      Navigator.pop(context); // Tutup popup loading
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal memproses jawaban: $e')),
       );
@@ -348,7 +367,7 @@ class _QuizScreenState extends State<QuizScreen> {
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
         onPressed: isSubmitting ? null : submitQuiz,
-        child: isSubmitting ? const CircularProgressIndicator(color: Colors.white) : const Text("Kirim Jawaban", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: const Text("Kirim Jawaban", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
