@@ -5,7 +5,7 @@ import '../screens/quiz_screen.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
-
+import '../services/nlp_quiz_service.dart';
 class LearningTemplate extends StatefulWidget {
   final String level;
   final String scenario;
@@ -23,6 +23,7 @@ class LearningTemplate extends StatefulWidget {
 }
 
 class _LearningTemplateState extends State<LearningTemplate> {
+  final NlpQuizService _quizService = NlpQuizService();
   double progress = 0.0;
   double scenarioProgress = 0.0;
   int selectedSegment = 0;
@@ -593,11 +594,57 @@ class _LearningTemplateState extends State<LearningTemplate> {
             onPressed: isLoading
                 ? null
                 : () async {
+              final answer = writingController.text;
+              if (answer.trim().isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Silakan isi jawaban dulu.")),
+                );
+                return;
+              }
+
+              setState(() => isLoading = true);
+              try {
+                final result = _quizService.evaluateLocally(
+                  jawabanUser: answer,
+                  jawabanBenar: q['pronunciation'] ?? '',
+                );
+
+                if (result.status == 'kurang tepat') {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text("❌ Jawaban kurang tepat.\n\nTips: Coba tulis '${q['pronunciation']}'", style: const TextStyle(height: 1.4)),
+                        backgroundColor: Colors.red[700],
+                        duration: const Duration(seconds: 4),
+                      ),
+                    );
+                  }
+                  setState(() => isLoading = false);
+                  return;
+                }
+
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("✅ Tepat sekali! Similarity: ${(result.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Terjadi kesalahan sistem, silakan coba lagi.")),
+                  );
+                }
+                setState(() => isLoading = false);
+                return;
+              }
+
+              setState(() => isLoading = false);
+
               // Simpan jawaban user ke Firestore (untuk NLP nanti)
               await saveUserAnswer(
                 segmen: 1,
                 index: questionIndex,
-                userAnswer: writingController.text,
+                userAnswer: answer,
               );
               await completeLesson();
               writingController.clear();
@@ -611,9 +658,6 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   selectedSegment = 2;
                 }
               });
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Jawaban terkirim!")),
-              );
             },
           ),
         ],
@@ -693,14 +737,13 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 await _speechToText.stop();
               }
 
-              // ── 2. CEK KEBENARAN SEDERHANA (HAPUS TANDA BACA & LOWERCASE)
-              final expected = (q['pronunciation'] ?? '').toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
-              final actual = _wordsSpoken.toLowerCase().replaceAll(RegExp(r'[^\w\s]'), '').trim();
-              
-              // Kriteria benar: Sama persis, atau teks aktual mengandung kunci jawaban penuh
-              bool isCorrect = actual == expected || (actual.contains(expected) && expected.isNotEmpty);
+              // ── 2. CEK KEBENARAN MENGGUNAKAN JACCARD SIMILARITY (LOKAL)
+              final result = _quizService.evaluateLocally(
+                jawabanUser: _wordsSpoken,
+                jawabanBenar: q['pronunciation']?.toString() ?? '',
+              );
 
-              if (!isCorrect) {
+              if (result.status == 'kurang tepat') {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text("❌ Kurang tepat. Anda bilang: '$_wordsSpoken'.\n\nTips: Coba ucapkan '${q['pronunciation']}'", style: const TextStyle(height: 1.4)),
@@ -715,7 +758,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
 
               // ── 3. JIKA BENAR, LANJUTKAN KE SOAL BERIKUTNYA
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("✅ Tepat sekali!", style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
+                SnackBar(content: Text("✅ Tepat sekali! Similarity: ${(result.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
               );
 
               await saveUserAnswer(

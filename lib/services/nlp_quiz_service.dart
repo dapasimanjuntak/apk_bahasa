@@ -75,14 +75,14 @@ class NlpQuizService {
       }
       
       // Fallback lokal jika API Error / RTO
-      return _evaluateLocally(
+      return evaluateLocally(
         jawabanUser: jawabanUser,
         jawabanBenar: jawabanBenar,
       );
     }
   }
 
-  AnswerEvaluation _evaluateLocally({
+  AnswerEvaluation evaluateLocally({
     required String jawabanUser,
     required String jawabanBenar,
   }) {
@@ -124,7 +124,7 @@ class NlpQuizService {
     }
 
     if (similarity >= 0.80) return 'benar';
-    if (similarity >= 0.65) return 'hampir benar';
+    if (similarity >= 0.50) return 'hampir benar';
     return 'kurang tepat';
   }
 }
