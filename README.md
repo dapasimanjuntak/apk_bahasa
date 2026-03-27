@@ -1,45 +1,59 @@
-# NLP Documentation
+# 📚 APK Bahasa - Dokumentasi Lengkap NLP
 
-## Introduction
-This document provides comprehensive information about the Natural Language Processing (NLP) system, including its architecture, evaluation modes, API endpoints, data models, implementation guide, and troubleshooting.
+> Aplikasi pembelajaran bahasa Indonesia berbasis Flutter + Firebase + NLP dengan sistem evaluasi jawaban otomatis menggunakan AI
 
-## Evaluation Modes
-### Online Evaluation
-- Description of online evaluation methods used in the NLP system.
-- Explanation of how real-time metrics are collected and interpreted.
+**Repository:** dapasimanjuntak/apk_bahasa  
+**Bahasa:** Dart (Flutter) 62.8% | HTML 37.2%  
+**Status:** 🟡 Development  
+**Dibuat:** 2026-03-25
 
-### Offline Evaluation
-- Description of offline evaluation methods.
-- Overview of datasets used and performance metrics calculated.
+---
 
-## Architecture
-- Overview of the system architecture including components and workflow.
-- Diagrams illustrating the data flow within the architecture.
+## 📖 Daftar Isi
 
-## API Endpoints
-### List of API Endpoints
-1. **POST /api/evaluate** - Submit data for evaluation.
-2. **GET /api/results/{id}** - Retrieve evaluation results.
-3. **GET /api/model/status** - Check the current status of the NLP model.
+- [Gambaran Umum](#-gambaran-umum)
+- [Fitur NLP](#-fitur-nlp)
+- [Arsitektur Sistem](#-arsitektur-sistem)
+- [Mode Evaluasi](#-mode-evaluasi)
+- [Struktur Proyek](#-struktur-proyek)
+- [Dependencies](#-dependencies)
+- [API Endpoints](#-api-endpoints)
+- [Model Data](#-model-data)
+- [Panduan Implementasi](#-panduan-implementasi)
+- [Troubleshooting](#-troubleshooting)
+- [Checklist Production](#-checklist-production-ready)
 
-### Example Requests
-- Example request bodies and expected responses for each endpoint mentioned.
+---
 
-## Data Models
-### Input Data Model
-- Definition and structure of input data expected by the API.
+## 🎯 Gambaran Umum
 
-### Output Data Model
-- Definition and structure of output data returned by the API.
+**APK Bahasa** adalah aplikasi pembelajaran bahasa Indonesia interaktif yang mengintegrasikan:
 
-## Implementation Guide
-- Step-by-step instructions for setting up the NLP system.
-- Dependencies and environment setup.
-- Code examples for integration.
+✅ **Kuis Bahasa Dinamis** - Soal dari berbagai skenario (tumbuhan, hewan, umum)  
+✅ **Evaluasi Otomatis AI** - Penilaian semantic menggunakan Google Gemini  
+✅ **Fallback Offline** - TF-IDF + Cosine Similarity untuk independence  
+✅ **Firebase Integration** - Cloud database & authentication  
+✅ **Multi-Language** - Bahasa Indonesia & Inggris  
+✅ **Progress Tracking** - Simpan skor & pembelajaran ke cloud
 
-## Troubleshooting
-- Common issues and their solutions.
-- FAQs related to the NLP system implementation and usage.
+**Target User:** Pelajar bahasa Indonesia tingkat pemula hingga menengah
 
-## Conclusion
-This document aims to provide all necessary resources and information to effectively utilize the NLP system. For further inquiries, refer to the support section of the documentation.
+---
+
+## 🧠 Fitur NLP
+
+Aplikasi menggunakan **sistem hybrid** dengan 2 mode evaluasi:
+
+### 1️⃣ Online Mode - Google Gemini (Primary)
+
+**Lokasi:** `lib/services/nlp_quiz_service.dart`
+
+| Aspek | Detail |
+|-------|--------|
+| **Akurasi** | ⭐⭐⭐⭐⭐ Sangat Tinggi |
+| **Teknologi** | Google Gemini API |
+| **Endpoint** | `http://206.189.46.79:8080/evaluate` |
+| **Timeout** | 15 detik |
+| **Evaluasi** | Semantic similarity (makna & konteks) |
+
+**Flow:**
