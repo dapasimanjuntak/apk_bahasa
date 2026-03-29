@@ -381,21 +381,11 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           Icon(_statusIcon(), color: color, size: 40),
           const SizedBox(height: 8),
-          Text("Status: ${evaluation!.status.toUpperCase()}", style: TextStyle(color: color, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              evaluation!.reason,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 13, color: color, height: 1.4, fontStyle: FontStyle.italic, fontWeight: FontWeight.w600),
-            ),
-          ),
+          Text("Status: ${evaluation!.status.toUpperCase()}", style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 4),
+          Text("Similarity: ${(evaluation!.similarity * 100).round()}%", style: TextStyle(color: color.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600)),
           const SizedBox(height: 16),
+
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(

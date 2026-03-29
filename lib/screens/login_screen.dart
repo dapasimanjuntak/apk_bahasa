@@ -308,10 +308,10 @@ class _LoginScreenState extends State<LoginScreen>
                                         ? const CircularProgressIndicator(strokeWidth: 2)
                                         : Row(
                                             mainAxisAlignment: MainAxisAlignment.center,
-                                            children: const [
-                                              Icon(Icons.login, size: 20, color: Colors.blue),
-                                              SizedBox(width: 10),
-                                              Text('Continue with Google', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
+                                            children: [
+                                              SvgPicture.asset('lib/widgets/google_logo.svg', width: 24, height: 24),
+                                              const SizedBox(width: 10),
+                                              const Text('Continue with Google', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
                                             ],
                                           ),
                                   ),

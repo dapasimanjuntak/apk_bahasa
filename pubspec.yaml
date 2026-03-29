@@ -36,3 +36,4 @@ flutter:
 
     assets:
         - lib/widgets/Logo.svg
+        - lib/widgets/google_logo.svg

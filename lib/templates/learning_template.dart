@@ -375,7 +375,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                     try {
                       await player.stop();
                       await flutterTts.setLanguage("id-ID");
-                      await flutterTts.setSpeechRate(0.85); // sedikit lambat agar jelas
+                      await flutterTts.setSpeechRate(0.4); // diperlambat agar lebih jelas
                       await flutterTts.speak(pronunciation);
                     } catch (e) {
                       debugPrint("Error play TTS: $e");
