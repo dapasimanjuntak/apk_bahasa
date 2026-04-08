@@ -18,6 +18,7 @@ class NlpQuizService {
   Future<List<NlpQuestion>> fetchQuestions({
     required String level,
     required String scenario,
+    required String languageCode,
   }) async {
     final snapshot = await _firestore
         .collection('topics') // Mengambil dari koleksi utama 'topics'
@@ -26,7 +27,7 @@ class NlpQuizService {
         .get();
 
     final questions = snapshot.docs
-        .map((doc) => NlpQuestion.fromMap(doc.id, doc.data()))
+        .map((doc) => NlpQuestion.fromMap(doc.id, doc.data(), languageCode))
         .where((q) => q.soal.trim().isNotEmpty && q.jawabanBenar.trim().isNotEmpty)
         .toList();
 
@@ -37,6 +38,7 @@ class NlpQuizService {
     required String soal,
     required String jawabanUser,
     required String jawabanBenar,
+    required String languageCode,
   }) async {
     const String apiUrl = "http://206.189.46.79:8080/evaluate";
 
@@ -48,6 +50,7 @@ class NlpQuizService {
           'soal': soal,
           'jawaban_benar': jawabanBenar,
           'jawaban_user': jawabanUser,
+          'target_language': languageCode, // Memberitahu AI untuk merespon dalam bahasa ini
         }),
       ).timeout(const Duration(seconds: 15));
 
@@ -64,20 +67,17 @@ class NlpQuizService {
           status: payload['status']?.toString() ?? _resolveStatus(similarity, null),
           cleanedUserAnswer: payload['cleaned_user']?.toString() ?? _cleanText(jawabanUser),
           cleanedCorrectAnswer: payload['cleaned_reference']?.toString() ?? _cleanText(jawabanBenar),
-          reason: payload['reason']?.toString() ?? "Dievaluasi oleh Gemini",
+          reason: payload['alasan']?.toString() ?? payload['reason']?.toString() ?? "Dievaluasi oleh Gemini",
         );
       } else {
         throw Exception("API Error: ${response.statusCode} - ${response.body}");
       }
     } catch (e) {
-      if (e is FormatException) {
-         // silent error for debugging non json response
-      }
-      
       // Fallback lokal jika API Error / RTO
       return evaluateLocally(
         jawabanUser: jawabanUser,
         jawabanBenar: jawabanBenar,
+        languageCode: languageCode,
       );
     }
   }
@@ -85,17 +85,27 @@ class NlpQuizService {
   AnswerEvaluation evaluateLocally({
     required String jawabanUser,
     required String jawabanBenar,
+    required String languageCode,
   }) {
     final cleanedUser = _cleanText(jawabanUser);
     final cleanedCorrect = _cleanText(jawabanBenar);
     final similarity = _jaccardSimilarity(cleanedUser, cleanedCorrect);
+
+    final reasons = {
+      'en': 'Evaluated using an offline evaluation system (API not responding).',
+      'id': 'Dinilai menggunakan sistem evaluasi offline (API sedang tidak merespon).',
+      'ru': 'Оценивается с использованием системы офлайн-оценки (API не отвечает).',
+      'es': 'Evaluado mediante un sistema de evaluación fuera de línea (la API no responde).',
+      'zh': '使用离线评估系统进行评估（API 未响应）。',
+    };
+    final reason = reasons[languageCode] ?? reasons['en']!;
 
     return AnswerEvaluation(
       similarity: similarity,
       status: _resolveStatus(similarity, null),
       cleanedUserAnswer: cleanedUser,
       cleanedCorrectAnswer: cleanedCorrect,
-      reason: 'Dinilai menggunakan sistem evaluasi offline (API sedang tidak merespon).',
+      reason: reason,
     );
   }
 

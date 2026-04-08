@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../screens/quiz_screen.dart';
+import '../screens/language_service.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -91,21 +93,31 @@ class _LearningTemplateState extends State<LearningTemplate> {
   // Fields  : question, audioUrl, pronuncituation
 
   Future<void> loadQuestions() async {
+    final langCode = Provider.of<LanguageService>(context, listen: false).currentLang;
     try {
       final List<Map<String, dynamic>> loaded = [];
 
       final querySnapshot = await FirebaseFirestore.instance
           .collection('topics')
-          .doc(widget.scenario) // widget.scenario diisi dengan docId, misalnya "beginner_airport"
+          .doc(widget.scenario) 
           .collection('items')
           .get();
 
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
+        
+        // Logika untuk mengambil teks kuis sesuai bahasa (pencerminan dari model kuis)
+        String resolveQuestionPrompt(dynamic q) {
+          if (q is Map) {
+            return (q[langCode] ?? q['en'] ?? q['id'] ?? '').toString();
+          }
+          return q?.toString() ?? '';
+        }
+
         loaded.add({
-          'question': data['question'] ?? data['soal'] ?? '',
+          'question': resolveQuestionPrompt(data['question'] ?? data['soal']),
           'audioUrl': data['audioUrl'] ?? '',
-          'pronunciation': data['Pronunciation'] ?? data['pronunciation'] ?? data['jawaban_benar'] ?? '',
+          'pronunciation': (data['answer'] ?? data['jawaban'] ?? data['jawaban_benar'] ?? data['Pronunciation'] ?? data['pronunciation'] ?? '').toString(),
         });
       }
 
@@ -627,6 +639,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
                 final result = _quizService.evaluateLocally(
                   jawabanUser: answer,
                   jawabanBenar: q['pronunciation'] ?? '',
+                  languageCode: Provider.of<LanguageService>(context, listen: false).currentLang,
                 );
 
                 if (result.status == 'kurang tepat') {
@@ -788,6 +801,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
               final result = _quizService.evaluateLocally(
                 jawabanUser: _wordsSpoken,
                 jawabanBenar: q['pronunciation']?.toString() ?? '',
+                languageCode: Provider.of<LanguageService>(context, listen: false).currentLang,
               );
 
               if (result.status == 'kurang tepat') {

@@ -91,6 +91,7 @@ class LanguageService extends ChangeNotifier {
       'wiki_em2': 'Ambulance: 118',
       'wiki_em3': 'Fire Department: 113',
 
+
       //Learning template
       'l-hint1' : 'Scenario Completed!',
       'l-hint2' : 'You finished all lessons. Ready for the quiz?',
@@ -113,6 +114,29 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Incorrect. You said: "{spoken}".\n\nTip: Try saying "{correct}"',
       'all_done': 'All questions completed!',
       'l_next' : 'Next',
+
+      // quiz screen
+      'quiz_title': 'Quiz',
+      'quiz_soal_progress': 'Question {current} / {total}',
+      'quiz_hint': 'Write or record your answer...',
+      'quiz_ref_answer': 'Reference answer:',
+      'quiz_similarity': 'Similarity:',
+      'quiz_submit': 'Submit Answer',
+      'quiz_fill_first': 'Please fill in your answer first.',
+      'quiz_analyzing': 'Your answer is being analyzed...',
+      'quiz_finished': 'Quiz Finished!',
+      'quiz_final_score': 'Your Final Score:',
+      'quiz_correct_count': 'Correct {correct} out of {total} questions',
+      'quiz_score_saved': 'Your score has been automatically saved in real-time.',
+      'quiz_back_menu': 'Back to Menu',
+      'quiz_status': 'Status:',
+      'quiz_reason_label': 'Reason:',
+      'quiz_next': 'Next Question',
+      'quiz_done': 'Finish',
+      'quiz_load_fail': 'Failed to load questions. Please try again.',
+      'quiz_retry': 'Try Again',
+      'quiz_no_questions': 'No questions available.',
+
     },
 
     'id': {
@@ -199,6 +223,7 @@ class LanguageService extends ChangeNotifier {
       'wiki_em2': 'Ambulans: 118',
       'wiki_em3': 'Pemadam Kebakaran: 113',
 
+
       //Learning template
       'l-hint1' : 'Skenario Selesai!',
       'l-hint2' : 'Kamu menyelesaikan semua pelajaran. Siap untuk kuis?',
@@ -221,6 +246,29 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Salah. Kamu berkata: "{spoken}".\n\nTips: Coba ucapkan "{correct}"',
       'all_done': 'Semua pertanyaan selesai!',
       'l_next' : 'Lanjut',
+
+      // quiz screen
+      'quiz_title': 'Kuis',
+      'quiz_soal_progress': 'Soal {current} / {total}',
+      'quiz_hint': 'Tulis atau rekam jawaban...',
+      'quiz_ref_answer': 'Jawaban referensi:',
+      'quiz_similarity': 'Kemiripan:',
+      'quiz_submit': 'Kirim Jawaban',
+      'quiz_fill_first': 'Silakan isi jawaban dulu.',
+      'quiz_analyzing': 'Jawabanmu sedang dianalisis...',
+      'quiz_finished': 'Kuis Selesai!',
+      'quiz_final_score': 'Nilai Akhir Anda:',
+      'quiz_correct_count': 'Benar {correct} dari {total} soal',
+      'quiz_score_saved': 'Nilai Anda telah otomatis disimpan secara real-time.',
+      'quiz_back_menu': 'Kembali ke Menu',
+      'quiz_status': 'Status:',
+      'quiz_reason_label': 'Alasan:',
+      'quiz_next': 'Soal Berikutnya',
+      'quiz_done': 'Selesai',
+      'quiz_load_fail': 'Gagal memuat soal. Coba lagi.',
+      'quiz_retry': 'Coba Lagi',
+      'quiz_no_questions': 'Soal belum tersedia.',
+
     },
 
     'es': {
@@ -307,6 +355,7 @@ class LanguageService extends ChangeNotifier {
       'wiki_em2': 'Ambulancia: 118',
       'wiki_em3': 'Bomberos: 113',
 
+
       //Learning template
       'l-hint1' : '¡Escenario completado!',
       'l-hint2' : 'Terminaste todas las lecciones. ¿Listo para el cuestionario?',
@@ -330,6 +379,29 @@ class LanguageService extends ChangeNotifier {
       'all_done': '¡Todas las preguntas completadas!',
       'l_next' : 'Siguiente',
 
+
+
+      // quiz screen
+      'quiz_title': 'Cuestionario',
+      'quiz_soal_progress': 'Pregunta {current} / {total}',
+      'quiz_hint': 'Escribe o graba tu respuesta...',
+      'quiz_ref_answer': 'Respuesta de referencia:',
+      'quiz_similarity': 'Similitud:',
+      'quiz_submit': 'Enviar Respuesta',
+      'quiz_fill_first': 'Por favor, escribe tu respuesta primero.',
+      'quiz_analyzing': 'Tu respuesta está siendo analizada...',
+      'quiz_finished': '¡Cuestionario Terminado!',
+      'quiz_final_score': 'Tu Puntuación Final:',
+      'quiz_correct_count': '{correct} correctas de {total} preguntas',
+      'quiz_score_saved': 'Tu puntuación se ha guardado automáticamente en tiempo real.',
+      'quiz_back_menu': 'Volver al Menú',
+      'quiz_status': 'Estado:',
+      'quiz_reason_label': 'Razón:',
+      'quiz_next': 'Siguiente Pregunta',
+      'quiz_done': 'Terminar',
+      'quiz_load_fail': 'Error al cargar preguntas. Inténtalo de nuevo.',
+      'quiz_retry': 'Intentar de Nuevo',
+      'quiz_no_questions': 'No hay preguntas disponibles.',
 
     },
 
@@ -416,6 +488,7 @@ class LanguageService extends ChangeNotifier {
       'wiki_em2': 'Скорая помощь: 118',
       'wiki_em3': 'Пожарная служба: 113',
 
+
       //Learning template
       'l-hint1' : 'Сценарий завершён!',
       'l-hint2' : 'Вы завершили все уроки. Готовы к тесту?',
@@ -438,6 +511,29 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Неправильно. Вы сказали: "{spoken}".\n\nПодсказка: Попробуйте сказать "{correct}"',
       'all_done': 'Все вопросы выполнены!',
       'l_next' : 'Далее',
+
+      // quiz screen
+      'quiz_title': 'Тест',
+      'quiz_soal_progress': 'Вопрос {current} / {total}',
+      'quiz_hint': 'Напишите или запишите ответ...',
+      'quiz_ref_answer': 'Правильный ответ:',
+      'quiz_similarity': 'Схожесть:',
+      'quiz_submit': 'Отправить Ответ',
+      'quiz_fill_first': 'Пожалуйста, сначала введите ответ.',
+      'quiz_analyzing': 'Ваш ответ анализируется...',
+      'quiz_finished': 'Тест Завершён!',
+      'quiz_final_score': 'Ваш Итоговый Результат:',
+      'quiz_correct_count': 'Правильно {correct} из {total} вопросов',
+      'quiz_score_saved': 'Ваш результат автоматически сохранён в реальном времени.',
+      'quiz_back_menu': 'Вернуться в Меню',
+      'quiz_status': 'Статус:',
+      'quiz_reason_label': 'Причина:',
+      'quiz_next': 'Следующий Вопрос',
+      'quiz_done': 'Завершить',
+      'quiz_load_fail': 'Не удалось загрузить вопросы. Попробуйте снова.',
+      'quiz_retry': 'Попробовать Снова',
+      'quiz_no_questions': 'Вопросы недоступны.',
+
     },
 
     'zh': {
@@ -523,6 +619,7 @@ class LanguageService extends ChangeNotifier {
       'wiki_em2': '救护车: 118',
       'wiki_em3': '消防: 113',
 
+
       //Learning template
       'l-hint1' : '场景已完成！',
       'l-hint2' : '你已完成所有课程，准备好参加测验了吗？',
@@ -545,6 +642,29 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ 错误。你说的是："{spoken}"。\n\n提示：试着说 "{correct}"',
       'all_done': '所有问题已完成！',
       'l_next' : '下一个',
+
+      // quiz screen
+      'quiz_title': '测验',
+      'quiz_soal_progress': '第 {current} / {total} 题',
+      'quiz_hint': '写下或录制您的答案...',
+      'quiz_ref_answer': '参考答案：',
+      'quiz_similarity': '相似度：',
+      'quiz_submit': '提交答案',
+      'quiz_fill_first': '请先填写您的答案。',
+      'quiz_analyzing': '正在分析您的答案...',
+      'quiz_finished': '测验完成！',
+      'quiz_final_score': '您的最终得分：',
+      'quiz_correct_count': '{total} 题中答对 {correct} 题',
+      'quiz_score_saved': '您的成绩已实时自动保存。',
+      'quiz_back_menu': '返回菜单',
+      'quiz_status': '状态：',
+      'quiz_reason_label': '原因：',
+      'quiz_next': '下一题',
+      'quiz_done': '完成',
+      'quiz_load_fail': '加载题目失败，请重试。',
+      'quiz_retry': '重试',
+      'quiz_no_questions': '暂无题目。',
+
     },
   };
 

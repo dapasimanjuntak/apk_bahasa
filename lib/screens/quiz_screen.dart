@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,6 +7,7 @@ import '../models/answer_evaluation.dart';
 import '../models/nlp_question.dart';
 import '../services/nlp_quiz_service.dart';
 import '../templates/levels_scenario_template.dart';
+import 'language_service.dart';
 
 class QuizScreen extends StatefulWidget {
   final String level;
@@ -33,7 +35,7 @@ class _QuizScreenState extends State<QuizScreen> {
   bool isSubmitting = false;
   bool _isSpeechReady = false;
   bool _isListening = false;
-  String? _error;
+  bool _hasError = false;
 
   AnswerEvaluation? evaluation;
   int correctAnswersCount = 0;
@@ -59,23 +61,25 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _loadQuestions() async {
+    final languageCode = Provider.of<LanguageService>(context, listen: false).currentLang;
     try {
       final loaded = await _quizService.fetchQuestions(
         level: widget.level,
         scenario: widget.scenario,
+        languageCode: languageCode,
       );
 
       if (!mounted) return;
       setState(() {
         questions = loaded;
         isLoading = false;
-        _error = null;
+        _hasError = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         isLoading = false;
-        _error = 'Gagal memuat soal. Coba lagi.';
+        _hasError = true;
       });
     }
   }
@@ -117,10 +121,11 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> submitQuiz() async {
     if (questions.isEmpty) return;
     final userAnswer = _answerController.text.trim();
+    final lang = Provider.of<LanguageService>(context, listen: false);
 
     if (userAnswer.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan isi jawaban dulu.')),
+        SnackBar(content: Text(lang.t('quiz_fill_first'))),
       );
       return;
     }
@@ -135,10 +140,10 @@ class _QuizScreenState extends State<QuizScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: const [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text("Jawabanmu sedang dianalisis...", textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.w600)),
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(lang.t('quiz_analyzing'), textAlign: TextAlign.center, style: const TextStyle(fontWeight: FontWeight.w600)),
           ],
         ),
       ),
@@ -149,10 +154,11 @@ class _QuizScreenState extends State<QuizScreen> {
         soal: current.soal,
         jawabanUser: userAnswer,
         jawabanBenar: current.jawabanBenar,
+        languageCode: lang.currentLang,
       );
 
       if (!mounted) return;
-      Navigator.pop(context); // Tutup popup loading
+      Navigator.pop(context);
 
       setState(() {
         evaluation = result;
@@ -162,15 +168,14 @@ class _QuizScreenState extends State<QuizScreen> {
         }
       });
 
-      // Update Firestore progress jika soal terakhir
       if (currentIndex == questions.length - 1) {
         await _updateUserProgress();
       }
     } catch (e) {
       if (!mounted) return;
-      Navigator.pop(context); // Tutup popup loading
+      Navigator.pop(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal memproses jawaban: $e')),
+        SnackBar(content: Text('Error: $e')),
       );
     } finally {
       if (mounted) setState(() => isSubmitting = false);
@@ -195,6 +200,8 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _nextQuestion() {
+    final lang = Provider.of<LanguageService>(context, listen: false);
+
     if (currentIndex < questions.length - 1) {
       setState(() {
         currentIndex++;
@@ -205,21 +212,20 @@ class _QuizScreenState extends State<QuizScreen> {
       return;
     }
 
-    // Hitung total nilai untuk ditampilkan
     final total = questions.length;
     final percent = ((correctAnswersCount / total) * 100).toInt();
 
     showDialog(
       context: context,
-      barrierDismissible: false, // Wajib tekan tombol OK
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text('🎉 Quiz Selesai!', textAlign: TextAlign.center),
+          title: Text('🎉 ${lang.t("quiz_finished")}', textAlign: TextAlign.center),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Nilai Akhir Anda:', style: TextStyle(color: Colors.grey)),
+              Text(lang.t('quiz_final_score'), style: const TextStyle(color: Colors.grey)),
               const SizedBox(height: 10),
               Text(
                 '$percent',
@@ -230,12 +236,18 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              Text('Benar $correctAnswersCount dari $total soal', style: const TextStyle(fontWeight: FontWeight.w600)),
+              Text(
+                lang.t('quiz_correct_count', params: {
+                  'correct': '$correctAnswersCount',
+                  'total': '$total',
+                }),
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
               const SizedBox(height: 16),
-              const Text(
-                'Nilai Anda telah otomatis disimpan di sistem kami secara real-time.',
+              Text(
+                lang.t('quiz_score_saved'),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 12, color: Colors.blue),
+                style: const TextStyle(fontSize: 12, color: Colors.blue),
               ),
             ],
           ),
@@ -259,7 +271,7 @@ class _QuizScreenState extends State<QuizScreen> {
                     (route) => false,
                   );
                 },
-                child: const Text('Kembali ke Menu', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text(lang.t('quiz_back_menu'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
             ),
           ],
@@ -270,18 +282,20 @@ class _QuizScreenState extends State<QuizScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
+
     if (isLoading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
 
-    if (_error != null || questions.isEmpty) {
+    if (_hasError || questions.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Quiz NFL')),
+        appBar: AppBar(title: Text(lang.t('quiz_title'))),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(_error ?? 'Soal belum tersedia.'),
+              Text(_hasError ? lang.t('quiz_load_fail') : lang.t('quiz_no_questions')),
               const SizedBox(height: 16),
-              ElevatedButton(onPressed: _loadQuestions, child: const Text('Coba Lagi')),
+              ElevatedButton(onPressed: _loadQuestions, child: Text(lang.t('quiz_retry'))),
             ],
           ),
         ),
@@ -293,7 +307,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: Text("${widget.scenario.toUpperCase()} Quiz"),
+        title: Text("${widget.scenario.toUpperCase()} ${lang.t('quiz_title')}"),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
@@ -301,21 +315,19 @@ class _QuizScreenState extends State<QuizScreen> {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // Progress Header
-            _buildHeader(),
+            _buildHeader(lang),
             const SizedBox(height: 24),
-            // Question Card
-            _buildQuestionCard(currentQuestion),
+            _buildQuestionCard(currentQuestion, lang),
             const SizedBox(height: 16),
-            if (!isSubmitted) _buildSubmitButton(),
-            if (isSubmitted) _buildResultCard(),
+            if (!isSubmitted) _buildSubmitButton(lang),
+            if (isSubmitted) _buildResultCard(lang),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(LanguageService lang) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
@@ -323,16 +335,26 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           const Icon(Icons.quiz_rounded, color: Colors.blue),
           const SizedBox(width: 12),
-          Text("Soal ${currentIndex + 1} / ${questions.length}", style: const TextStyle(fontWeight: FontWeight.bold)),
+          Text(
+            lang.t('quiz_soal_progress', params: {
+              'current': '${currentIndex + 1}',
+              'total': '${questions.length}',
+            }),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildQuestionCard(NlpQuestion q) {
+  Widget _buildQuestionCard(NlpQuestion q, LanguageService lang) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: isSubmitted ? Border.all(color: _statusColor().withOpacity(0.5)) : null),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: isSubmitted ? Border.all(color: _statusColor().withOpacity(0.5)) : null,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -342,7 +364,7 @@ class _QuizScreenState extends State<QuizScreen> {
             controller: _answerController,
             enabled: !isSubmitted,
             decoration: InputDecoration(
-              hintText: "Tulis atau rekam jawaban...",
+              hintText: lang.t('quiz_hint'),
               suffixIcon: IconButton(
                 icon: Icon(_isListening ? Icons.mic_off : Icons.mic, color: _isListening ? Colors.red : Colors.blue),
                 onPressed: _toggleSpeech,
@@ -352,48 +374,97 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
           if (isSubmitted) ...[
             const SizedBox(height: 16),
-            Text("Jawaban referensi: ${q.jawabanBenar}", style: const TextStyle(color: Colors.grey, fontSize: 13)),
-            Text("Similarity: ${(evaluation!.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text("${lang.t('quiz_ref_answer')} ${q.jawabanBenar}", style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            Text("${lang.t('quiz_similarity')} ${(evaluation!.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)),
           ]
         ],
       ),
     );
   }
 
-  Widget _buildSubmitButton() {
+  Widget _buildSubmitButton(LanguageService lang) {
     return SizedBox(
       width: double.infinity,
       height: 52,
       child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.blue,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        ),
         onPressed: isSubmitting ? null : submitQuiz,
-        child: const Text("Kirim Jawaban", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        child: Text(lang.t('quiz_submit'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
       ),
     );
   }
 
-  Widget _buildResultCard() {
+  Widget _buildResultCard(LanguageService lang) {
     final color = _statusColor();
+    final reason = evaluation?.reason ?? '';
+
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(16), border: Border.all(color: color)),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color),
+      ),
       child: Column(
         children: [
           Icon(_statusIcon(), color: color, size: 40),
           const SizedBox(height: 8),
-          Text("Status: ${evaluation!.status.toUpperCase()}", style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold)),
+          Text(
+            "${lang.t('quiz_status')} ${evaluation!.status.toUpperCase()}",
+            style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
+          ),
           const SizedBox(height: 4),
-          Text("Similarity: ${(evaluation!.similarity * 100).round()}%", style: TextStyle(color: color.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 16),
+          Text(
+            "${lang.t('quiz_similarity')} ${(evaluation!.similarity * 100).round()}%",
+            style: TextStyle(color: color.withOpacity(0.8), fontSize: 14, fontWeight: FontWeight.w600),
+          ),
 
+          // Tampilkan alasan dari API
+          if (reason.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: color.withOpacity(0.3)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.lightbulb_outline, size: 14, color: color),
+                      const SizedBox(width: 6),
+                      Text(
+                        lang.t('quiz_reason_label'),
+                        style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(reason, style: const TextStyle(fontSize: 13, color: Colors.black87, height: 1.4)),
+                ],
+              ),
+            ),
+          ],
+
+          const SizedBox(height: 16),
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: color),
               onPressed: _nextQuestion,
-              child: Text(currentIndex < questions.length - 1 ? "Soal Berikutnya" : "Selesai", style: const TextStyle(color: Colors.white)),
+              child: Text(
+                lang.t(currentIndex < questions.length - 1 ? 'quiz_next' : 'quiz_done'),
+                style: const TextStyle(color: Colors.white),
+              ),
             ),
-          )
+          ),
         ],
       ),
     );
