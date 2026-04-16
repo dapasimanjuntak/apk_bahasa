@@ -8,10 +8,13 @@ import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:speech_to_text/speech_to_text.dart';
 import '../services/nlp_quiz_service.dart';
+import '../screens/language_service.dart';
+import 'package:provider/provider.dart';
 class LearningTemplate extends StatefulWidget {
   final String level;
   final String scenario;
   final String type;
+
 
   const LearningTemplate({
     super.key,
@@ -287,6 +290,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
   // ─── SHARED CARD SOAL ────────────────────────────────────────────────────
 
   Widget _buildQuestionCard({
+    required LanguageService lang,
     required String topLabel,
     required String subLabel,
     required String questionTitle,
@@ -431,13 +435,13 @@ class _LearningTemplateState extends State<LearningTemplate> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Row(
+                 Row(
                   children: [
                     Icon(Icons.check_circle_rounded,
                         color: Colors.green, size: 18),
                     SizedBox(width: 8),
                     Text(
-                      "Scenario Completed!",
+                      lang.t('l_hint1'),
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.w700,
@@ -447,8 +451,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   ],
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  "You've finished all lessons. Ready for the quiz?",
+                Text(
+                  lang.t('l_hint2'),
                   style: TextStyle(fontSize: 12, color: Color(0xFF666666)),
                 ),
                 const SizedBox(height: 12),
@@ -468,8 +472,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                       );
                     },
                     icon: const Icon(Icons.quiz_rounded, size: 18),
-                    label: const Text(
-                      "Start Quiz",
+                    label: Text(
+                      lang.t('l_quiz_button'),
                       style: TextStyle(
                           fontWeight: FontWeight.w600, fontSize: 14),
                     ),
@@ -526,16 +530,24 @@ class _LearningTemplateState extends State<LearningTemplate> {
   Widget _buildListeningSegment() {
     if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
     final q = questions[questionIndex];
+    final lang = context.watch<LanguageService>();
 
     return _buildQuestionCard(
-      topLabel: "Dengarkan audio berikut",
-      subLabel: "Simak baik-baik lalu lanjut ke soal berikutnya",
-      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      lang: lang,
+      topLabel: lang.t('listening_top'),
+      subLabel: lang.t('listening_sub'),
+      questionTitle: lang.t(
+          'question_title',
+          params: {
+            'current': (questionIndex + 1).toString(),
+            'total': '5',
+          },
+        ),
       questionContent: q['question'] ?? '',
       audioUrl: q['audioUrl'] ?? '',
       pronunciation: q['pronunciation'] ?? '',
       actionButton: _actionButton(
-        label: "Lanjut",
+        label: lang.t('l_next'),
         icon: Icons.arrow_forward_rounded,
         onPressed: isLoading
             ? null
@@ -561,11 +573,19 @@ class _LearningTemplateState extends State<LearningTemplate> {
   Widget _buildWritingSegment() {
     if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
     final q = questions[questionIndex];
+    final lang = context.watch<LanguageService>();
 
     return _buildQuestionCard(
-      topLabel: "Tulis jawabanmu",
-      subLabel: "Terjemahkan kalimat berikut ke Bahasa Indonesia",
-      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      lang: lang,
+      topLabel: lang.t('writing_top'),
+      subLabel: lang.t('writing_sub'),
+      questionTitle: lang.t(
+        'question_title',
+        params: {
+          'current': (questionIndex + 1).toString(),
+          'total': '5',
+        },
+      ),
       questionContent: q['question'] ?? '',
       audioUrl: q['audioUrl'] ?? '',
       pronunciation: q['pronunciation'] ?? '',
@@ -577,7 +597,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
             minLines: 2,
             maxLines: 4,
             decoration: InputDecoration(
-              hintText: "Ketik jawabanmu dalam Bahasa Indonesia...",
+              hintText: lang.t('l_hint_writting'),
               hintStyle: const TextStyle(color: Color(0xFFAAAAAA)),
               filled: true,
               fillColor: const Color(0xFFF8F8F8),
@@ -601,7 +621,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
           ),
           const SizedBox(height: 14),
           _actionButton(
-            label: "Kirim",
+            label: lang.t('l_send'),
             icon: Icons.check_rounded,
             onPressed: isLoading
                 ? null
@@ -609,7 +629,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
               final answer = writingController.text;
               if (answer.trim().isEmpty) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text("Silakan isi jawaban dulu.")),
+                  SnackBar(content: Text(lang.t('answer_empty'))),
                 );
                 return;
               }
@@ -626,7 +646,16 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   if (mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text("❌ Jawaban kurang tepat.\n\nTips: Coba tulis '${q['pronunciation']}'", style: const TextStyle(height: 1.4)),
+                        content:
+                        Text(
+                          lang.t(
+                            'answer_wrong',
+                            params: {
+                              'correct': q['pronunciation'] ?? '',
+                            },
+                          ),
+                          style: const TextStyle(height: 1.4),
+                        ),
                         backgroundColor: Colors.red[700],
                         duration: const Duration(seconds: 4),
                       ),
@@ -638,13 +667,23 @@ class _LearningTemplateState extends State<LearningTemplate> {
 
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text("✅ Tepat sekali! Similarity: ${(result.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
+                      SnackBar(
+                        content: Text(
+                          lang.t(
+                            'answer_correct',
+                            params: {
+                              'score': (result.similarity * 100).round().toString(),
+                            },
+                          ),
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                   );
                 }
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Terjadi kesalahan sistem, silakan coba lagi.")),
+                    const SnackBar(content: Text("There something wrong please try again.")),
                   );
                 }
                 setState(() => isLoading = false);
@@ -683,11 +722,19 @@ class _LearningTemplateState extends State<LearningTemplate> {
   Widget _buildSpeakingSegment() {
     if (isLoadingQuestions || questions.isEmpty) return _buildLoadingOrEmpty();
     final q = questions[questionIndex];
+    final lang = context.watch<LanguageService>();
 
     return _buildQuestionCard(
-      topLabel: "Ucapkan dengan lantang",
-      subLabel: "Baca kalimat berikut dengan jelas",
-      questionTitle: "Soal ${questionIndex + 1} dari 5",
+      lang: lang,
+      topLabel: lang.t('speaking_top'),
+      subLabel: lang.t('speaking_sub'),
+      questionTitle: lang.t(
+        'question_title',
+        params: {
+          'current': (questionIndex + 1).toString(),
+          'total': '5',
+        },
+      ),
       questionContent: q['question'] ?? '',
       audioUrl: q['audioUrl'] ?? '',
       pronunciation: q['pronunciation'] ?? '',
@@ -725,8 +772,8 @@ class _LearningTemplateState extends State<LearningTemplate> {
                     _wordsSpoken.isNotEmpty
                         ? _wordsSpoken
                         : _speechToText.isListening
-                            ? "Mendengarkan..."
-                            : "Tekan mikrofon & bicara...",
+                          ? lang.t('listening_status')
+                          : lang.t('mic_hint'),
                     style: TextStyle(
                       fontSize: 14,
                       color: _wordsSpoken.isNotEmpty || _speechToText.isListening ? const Color(0xFF222222) : const Color(0xFF888888),
@@ -740,7 +787,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
           const SizedBox(height: 14),
 
           _actionButton(
-            label: "Kirim Suara",
+            label: lang.t('send_voice'),
             icon: Icons.send_rounded,
             onPressed: (isLoading || _wordsSpoken.isEmpty)
                 ? null
@@ -760,7 +807,16 @@ class _LearningTemplateState extends State<LearningTemplate> {
               if (result.status == 'kurang tepat') {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text("❌ Kurang tepat. Anda bilang: '$_wordsSpoken'.\n\nTips: Coba ucapkan '${q['pronunciation']}'", style: const TextStyle(height: 1.4)),
+                    content: Text(
+                      lang.t(
+                        'speaking_wrong',
+                        params: {
+                          'spoken': _wordsSpoken,
+                          'correct': q['pronunciation'] ?? '',
+                        },
+                      ),
+                      style: const TextStyle(height: 1.4),
+                    ),
                     backgroundColor: Colors.red[700],
                     duration: const Duration(seconds: 4),
                   ),
@@ -772,7 +828,18 @@ class _LearningTemplateState extends State<LearningTemplate> {
 
               // ── 3. JIKA BENAR, LANJUTKAN KE SOAL BERIKUTNYA
               ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text("✅ Tepat sekali! Similarity: ${(result.similarity * 100).round()}%", style: const TextStyle(fontWeight: FontWeight.bold)), backgroundColor: Colors.green),
+                SnackBar(
+                  content: Text(
+                    lang.t(
+                      'answer_correct',
+                      params: {
+                        'score': (result.similarity * 100).round().toString(),
+                      },
+                    ),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: Colors.green,
+                ),
               );
 
               await saveUserAnswer(
@@ -788,7 +855,9 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   segmentQuestionIndex[selectedSegment] = questionIndex;
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Semua soal selesai!")),
+                    SnackBar(
+                      content: Text(lang.t('all_done')),
+                    ),
                   );
                 }
               });
@@ -803,6 +872,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
