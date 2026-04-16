@@ -940,7 +940,9 @@ class _LearningTemplateState extends State<LearningTemplate> {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    "${(scenarioProgress * 100).toInt()}% selesai",
+                    lang.t('l_completed', params: {
+                      'percent': (scenarioProgress * 100).toInt().toString()
+                    }),
                     style: const TextStyle(
                       fontSize: 12,
                       color: Color(0xFF888888),

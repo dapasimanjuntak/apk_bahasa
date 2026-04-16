@@ -62,12 +62,21 @@ class NlpQuizService {
             ? (similarityRaw > 1 ? similarityRaw / 100 : similarityRaw).toDouble()
             : 0.0;
 
+        final defaultReasons = {
+          'en': 'Evaluated by Gemini AI',
+          'id': 'Dievaluasi oleh Gemini AI',
+          'ru': 'Оценено Gemini AI',
+          'es': 'Evaluado por Gemini AI',
+          'zh': '由 Gemini AI 评估',
+        };
+        final defaultReason = defaultReasons[languageCode] ?? defaultReasons['en']!;
+
         return AnswerEvaluation(
           similarity: similarity,
           status: payload['status']?.toString() ?? _resolveStatus(similarity, null),
           cleanedUserAnswer: payload['cleaned_user']?.toString() ?? _cleanText(jawabanUser),
           cleanedCorrectAnswer: payload['cleaned_reference']?.toString() ?? _cleanText(jawabanBenar),
-          reason: payload['alasan']?.toString() ?? payload['reason']?.toString() ?? "Dievaluasi oleh Gemini",
+          reason: payload['alasan']?.toString() ?? payload['reason']?.toString() ?? defaultReason,
         );
       } else {
         throw Exception("API Error: ${response.statusCode} - ${response.body}");

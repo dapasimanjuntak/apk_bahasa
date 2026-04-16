@@ -413,7 +413,13 @@ class _QuizScreenState extends State<QuizScreen> {
           Icon(_statusIcon(), color: color, size: 40),
           const SizedBox(height: 8),
           Text(
-            "${lang.t('quiz_status')} ${evaluation!.status.toUpperCase()}",
+            "${lang.t('quiz_status')} ${lang.t(
+              evaluation!.status == 'benar'
+                  ? 'status_correct'
+                  : evaluation!.status == 'hampir benar'
+                      ? 'status_partial'
+                      : 'status_incorrect'
+            ).toUpperCase()}",
             style: TextStyle(color: color, fontSize: 16, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
