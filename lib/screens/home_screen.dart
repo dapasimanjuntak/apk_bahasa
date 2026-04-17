@@ -768,7 +768,7 @@ class _WikiCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    lang.t('button_explore'),
+                    lang.t('info_home_11'),
                     style: const TextStyle(
                       color: Color(0xFF4F80FF),
                       fontWeight: FontWeight.w700,
