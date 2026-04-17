@@ -22,6 +22,9 @@ class LevelScenarioTemplate extends StatelessWidget {
       case 'plants': return 'https://cdn-icons-png.flaticon.com/512/628/628283.png';
       case 'hotel': return 'https://cdn-icons-png.flaticon.com/512/9660/9660434.png';
       case 'restaurant': return 'https://cdn-icons-png.flaticon.com/512/3075/3075977.png';
+      case 'market': return 'https://cdn-icons-png.flaticon.com/512/1162/1162456.png';
+      case 'clinic': return 'https://cdn-icons-png.flaticon.com/512/2966/2966327.png';
+      case 'transportation': return 'https://cdn-icons-png.flaticon.com/512/3448/3448339.png';
       default: return 'https://cdn-icons-png.flaticon.com/512/4114/4114972.png';
     }
   }
@@ -32,6 +35,9 @@ class LevelScenarioTemplate extends StatelessWidget {
       case 'plants': return Colors.green;
       case 'hotel': return const Color(0xFFAB8B6A);
       case 'restaurant': return const Color(0xFFEF6C00);
+      case 'market': return const Color(0xFFFF9800);
+      case 'clinic': return const Color(0xFFE91E63);
+      case 'transportation': return const Color(0xFF4CAF50);
       default: return const Color(0xFF8B5CF6);
     }
   }
@@ -92,8 +98,14 @@ class LevelScenarioTemplate extends StatelessWidget {
               // Key untuk warna & gambar
               final String scenarioImageKey = data['scenario'] ?? docId;
 
-              final String title = data['title'] ?? lang.t(scenarioImageKey);
-              final String desc = data['description'] ?? lang.t('${scenarioImageKey}_desc');
+              // Gunakan lang.t jika ada kuncinya di LanguageService, jika tidak ada baru fallback ke Firestore
+              final String title = lang.t(scenarioImageKey) != scenarioImageKey 
+                  ? lang.t(scenarioImageKey) 
+                  : (data['title'] ?? scenarioImageKey);
+                  
+              final String desc = lang.t('${scenarioImageKey}_desc') != '${scenarioImageKey}_desc'
+                  ? lang.t('${scenarioImageKey}_desc')
+                  : (data['description'] ?? '');
 
               return Padding(
                 padding: const EdgeInsets.only(bottom: 16),
