@@ -144,6 +144,112 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Incorrect. You said: "{spoken}".\n\nTip: Try saying "{correct}"',
       'all_done': 'All questions completed!',
       'l_next' : 'Next',
+      'beginner': 'Beginner',
+      'intermediate': 'Intermediate',
+      'advanced': 'Advanced',
+      'expert': 'Expert',
+      'questions_not_available': 'Questions not available',
+      'error_try_again': 'Something went wrong, please try again.',
+      'learning_tab_listening': 'Listening',
+      'learning_tab_writing': 'Writing',
+      'learning_tab_speaking': 'Speaking',
+
+      // destinations
+      'bali': 'Bali',
+      'yogyakarta': 'Yogyakarta',
+      'jakarta': 'Jakarta',
+      'raja_ampat': 'Raja Ampat',
+
+      // auth
+      'login_title': 'Indonesian for Tourist',
+      'signin_tab': 'Sign In',
+      'signup_tab': 'Sign Up',
+      'email_label': 'Email',
+      'password_label': 'Password',
+      'username_label': 'Username',
+      'forgot_password_link': 'Forgot Password?',
+      'signin_button': 'Sign In',
+      'signup_button': 'Sign Up',
+      'create_account_button': 'Create Account',
+      'continue_with_google': 'Continue with Google',
+      'or_divider': 'OR',
+      'auth_error_filling': 'All fields are required',
+      'reset_password_title': 'Reset Your Password',
+      'reset_password_desc': 'Enter your email below and we will send you a link to reset your password.',
+      'send_reset_link_button': 'Send Reset Link',
+      'back_to_login': 'Back to Login',
+      'email_sent_title': 'Email Sent!',
+      'email_sent_desc': 'A password reset link has been sent to:',
+      'check_inbox_spam': 'Please check your inbox and spam folder.',
+
+      // home additions
+      'home_keep_it_up': '🔥 Keep it up!',
+      'home_progress_of_lessons': '{current} of {total} lessons',
+      'home_user_not_found': 'User data not found',
+      'home_active_course': 'Active Course',
+      'home_currently_working_on': 'Current Course',
+      'home_completed_label': '{percent}% completed',
+
+      // levels
+      'select_your_level': '🎓 Select Your Level',
+      'level_beginner': 'Beginner',
+      'level_intermediate': 'Intermediate',
+      'level_advanced': 'Advanced',
+
+      // settings additions
+      'logout_button': 'Logout',
+      'logout_confirm_title': 'Logout',
+      'logout_confirm_content': 'Are you sure you want to logout?',
+      'cancel_button': 'Cancel',
+      'changes_saved_msg': 'Changes saved!',
+      'admin_tools_title': 'Admin Tools',
+      'admin_upload_button': 'Open Question Uploader (Data Injection)',
+
+      // wiki ui
+      'wiki_all_destinations': 'All Destinations',
+      'wiki_back': 'Back',
+      'wiki_about_label': 'About {title}',
+      'wiki_tab_attractions': 'Attractions',
+      'wiki_tab_culture': 'Culture & Phrases',
+      'wiki_tab_emergency': 'Emergency',
+      'wiki_top_locations': 'Top Locations',
+      'wiki_cultural_highlights': 'Cultural Highlights',
+      'wiki_emergency_numbers': 'Emergency Numbers',
+
+      // wiki content - bali
+      'bali_att_1': 'Kuta Beach',
+      'bali_att_1_tip1': 'Sunset spot ideal for photography',
+      'bali_att_1_tip2': 'Popular for surfing beginners',
+      'bali_att_2': 'Uluwatu Temple',
+      'bali_att_2_tip1': 'Famous cliffside temple with ocean view',
+      'bali_att_2_tip2': 'Cultural Kecak dance at sunset',
+      'bali_cul_1': 'Balinese Dance',
+      'bali_cul_1_det': 'Traditional Kecak and Legong dances performed in temples.',
+
+      // wiki content - yogyakarta
+      'yogy_att_1': 'Borobudur Temple',
+      'yogy_att_1_tip1': 'Largest Buddhist temple in the world',
+      'yogy_att_2': 'Prambanan Temple',
+      'yogy_att_2_tip1': 'Stunning Hindu temple compound',
+      'yogy_cul_1': 'Wayang Kulit',
+      'yogy_cul_1_det': 'Traditional shadow puppet show with Rama/Shinta stories.',
+
+      // wiki content - jakarta
+      'jak_att_1': 'Old Town (Kota Tua)',
+      'jak_att_1_tip1': 'Dutch colonial architecture',
+      'jak_att_2': 'Thousand Islands',
+      'jak_att_2_tip1': 'Island getaway from the city',
+      'jak_cul_1': 'Betawi Culture',
+      'jak_cul_1_det': 'Indigenous culture of Jakarta with Ondel-ondel puppets.',
+
+      // wiki content - raja ampat
+      'ra_att_1': 'Wayag Islands',
+      'ra_att_1_tip1': 'Iconic karst island view',
+      'ra_att_2': 'Arborek Village',
+      'ra_att_2_tip1': 'Traditional Papuan fishing village',
+      'ra_cul_1': 'Papuan Traditions',
+      'ra_cul_1_det': 'Traditional dances with feather and shell costumes.',
+      'no_scenarios_for_level': 'No scenarios available for the {level} level.',
     },
 
     'id': {
@@ -283,6 +389,112 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Salah. Kamu berkata: "{spoken}".\n\nTips: Coba ucapkan "{correct}"',
       'all_done': 'Semua pertanyaan selesai!',
       'l_next' : 'Lanjut',
+      'beginner': 'Pemula',
+      'intermediate': 'Menengah',
+      'advanced': 'Lanjutan',
+      'expert': 'Ahli',
+      'questions_not_available': 'Pertanyaan tidak tersedia',
+      'error_try_again': 'Terjadi kesalahan, silakan coba lagi.',
+      'learning_tab_listening': 'Mendengar',
+      'learning_tab_writing': 'Menulis',
+      'learning_tab_speaking': 'Berbicara',
+
+      // destinations
+      'bali': 'Bali',
+      'yogyakarta': 'Yogyakarta',
+      'jakarta': 'Jakarta',
+      'raja_ampat': 'Raja Ampat',
+
+      // auth
+      'login_title': 'Indonesian for Tourist',
+      'signin_tab': 'Masuk',
+      'signup_tab': 'Daftar',
+      'email_label': 'Email',
+      'password_label': 'Kata Sandi',
+      'username_label': 'Nama Pengguna',
+      'forgot_password_link': 'Lupa Kata Sandi?',
+      'signin_button': 'Masuk',
+      'signup_button': 'Daftar',
+      'create_account_button': 'Buat Akun',
+      'continue_with_google': 'Lanjutkan dengan Google',
+      'or_divider': 'ATAU',
+      'auth_error_filling': 'Semua kolom wajib diisi',
+      'reset_password_title': 'Atur Ulang Kata Sandi',
+      'reset_password_desc': 'Masukkan email Anda di bawah ini dan kami akan mengirimkan tautan untuk mengatur ulang kata sandi Anda.',
+      'send_reset_link_button': 'Kirim Tautan Atur Ulang',
+      'back_to_login': 'Kembali ke Masuk',
+      'email_sent_title': 'Email Terkirim!',
+      'email_sent_desc': 'Tautan atur ulang kata sandi telah dikirim ke:',
+      'check_inbox_spam': 'Silakan periksa kotak masuk dan folder spam Anda.',
+
+      // home additions
+      'home_keep_it_up': '🔥 Semangat terus!',
+      'home_progress_of_lessons': '{current} dari {total} pelajaran',
+      'home_user_not_found': 'Data pengguna tidak ditemukan',
+      'home_active_course': 'Kursus Aktif',
+      'home_currently_working_on': 'Sedang Dipelajari',
+      'home_completed_label': '{percent}% selesai',
+
+      // levels
+      'select_your_level': '🎓 Pilih Level Anda',
+      'level_beginner': 'Pemula',
+      'level_intermediate': 'Menengah',
+      'level_advanced': 'Mahir',
+
+      // settings additions
+      'logout_button': 'Keluar',
+      'logout_confirm_title': 'Keluar',
+      'logout_confirm_content': 'Apakah Anda yakin ingin keluar?',
+      'cancel_button': 'Batal',
+      'changes_saved_msg': 'Perubahan disimpan!',
+      'admin_tools_title': 'Alat Admin',
+      'admin_upload_button': 'Buka Pengunggah Soal (Suntik Data)',
+
+      // wiki ui
+      'wiki_all_destinations': 'Semua Destinasi',
+      'wiki_back': 'Kembali',
+      'wiki_about_label': 'Tentang {title}',
+      'wiki_tab_attractions': 'Atraksi',
+      'wiki_tab_culture': 'Budaya & Frasa',
+      'wiki_tab_emergency': 'Darurat',
+      'wiki_top_locations': 'Lokasi Populer',
+      'wiki_cultural_highlights': 'Sorotan Budaya',
+      'wiki_emergency_numbers': 'Nomor Darurat',
+
+      // wiki content - bali
+      'bali_att_1': 'Pantai Kuta',
+      'bali_att_1_tip1': 'Spot matahari terbenam yang ideal untuk fotografi',
+      'bali_att_1_tip2': 'Populer untuk pemula selancar',
+      'bali_att_2': 'Pura Uluwatu',
+      'bali_att_2_tip1': 'Pura tepi tebing terkenal dengan pemandangan laut',
+      'bali_att_2_tip2': 'Tari Kecak budaya saat matahari terbenam',
+      'bali_cul_1': 'Tarian Bali',
+      'bali_cul_1_det': 'Tarian tradisional Kecak dan Legong yang dipentaskan di pura.',
+
+      // wiki content - yogyakarta
+      'yogy_att_1': 'Candi Borobudur',
+      'yogy_att_1_tip1': 'Candi Budha terbesar di dunia',
+      'yogy_att_2': 'Candi Prambanan',
+      'yogy_att_2_tip1': 'Kompleks candi Hindu yang memukau',
+      'yogy_cul_1': 'Wayang Kulit',
+      'yogy_cul_1_det': 'Pertunjukan boneka bayangan tradisional dengan kisah Rama/Shinta.',
+
+      // wiki content - jakarta
+      'jak_att_1': 'Kota Tua',
+      'jak_att_1_tip1': 'Arsitektur kolonial Belanda',
+      'jak_att_2': 'Kepulauan Seribu',
+      'jak_att_2_tip1': 'Liburan pulau dari hiruk pikuk kota',
+      'jak_cul_1': 'Budaya Betawi',
+      'jak_cul_1_det': 'Budaya asli Jakarta dengan boneka Ondel-ondel.',
+
+      // wiki content - raja ampat
+      'ra_att_1': 'Kepulauan Wayag',
+      'ra_att_1_tip1': 'Pemandangan pulau karst ikonik',
+      'ra_att_2': 'Desa Arborek',
+      'ra_att_2_tip1': 'Desa nelayan tradisional Papua',
+      'ra_cul_1': 'Tradisi Papua',
+      'ra_cul_1_det': 'Tarian tradisional dengan kostum bulu dan kerang.',
+      'no_scenarios_for_level': 'Belum ada skenario untuk level {level}.',
     },
 
     'es': {
@@ -422,6 +634,109 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Incorrecto. Dijiste: "{spoken}".\n\nConsejo: Intenta decir "{correct}"',
       'all_done': '¡Todas las preguntas completadas!',
       'l_next' : 'Siguiente',
+      'beginner': 'Principiante',
+      'intermediate': 'Intermedio',
+      'advanced': 'Avanzado',
+      'expert': 'Experto',
+      'questions_not_available': 'Preguntas no disponibles',
+      'error_try_again': 'Algo salió mal, por favor inténtalo de nuevo.',
+      'learning_tab_listening': 'Escuchando',
+      'learning_tab_writing': 'Escribiendo',
+      'learning_tab_speaking': 'Hablando',
+
+      // destinations
+      'bali': 'Bali',
+      'yogyakarta': 'Yogyakarta',
+      'jakarta': 'Jakarta',
+      'raja_ampat': 'Raja Ampat',
+
+      // auth
+      'login_title': 'Indonesian for Tourist',
+      'signin_tab': 'Iniciar sesión',
+      'signup_tab': 'Registrarse',
+      'email_label': 'Correo electrónico',
+      'password_label': 'Contraseña',
+      'username_label': 'Nombre de usuario',
+      'forgot_password_link': '¿Olvidaste tu contraseña?',
+      'signin_button': 'Iniciar sesión',
+      'signup_button': 'Registrarse',
+      'create_account_button': 'Crear cuenta',
+      'continue_with_google': 'Continuar con Google',
+      'or_divider': 'O',
+      'auth_error_filling': 'Todos los campos son obligatorios',
+      'reset_password_title': 'Restablecer contraseña',
+      'reset_password_desc': 'Ingresa tu correo abajo y te enviaremos un enlace.',
+      'send_reset_link_button': 'Enviar enlace',
+      'back_to_login': 'Volver al inicio',
+      'email_sent_title': '¡Email enviado!',
+      'email_sent_desc': 'Se ha enviado un enlace a:',
+      'check_inbox_spam': 'Revisa tu bandeja de entrada y spam.',
+
+      // home additions
+      'home_keep_it_up': '🔥 ¡Sigue así!',
+      'home_progress_of_lessons': '{current} de {total} lecciones',
+      'home_user_not_found': 'Usuario no encontrado',
+
+      // levels
+      'select_your_level': '🎓 Elige tu nivel',
+      'level_beginner': 'Principiante',
+      'level_intermediate': 'Intermedio',
+      'level_advanced': 'Avanzado',
+
+      // settings additions
+      'logout_button': 'Cerrar sesión',
+      'logout_confirm_title': 'Cerrar sesión',
+      'logout_confirm_content': '¿Seguro que quieres salir?',
+      'cancel_button': 'Cancelar',
+      'changes_saved_msg': '¡Cambios guardados!',
+      'admin_tools_title': 'Admin',
+      'admin_upload_button': 'Cargador de datos',
+
+      // wiki ui
+      'wiki_all_destinations': 'Todos los destinos',
+      'wiki_back': 'Atrás',
+      'wiki_about_label': 'Sobre {title}',
+      'wiki_tab_attractions': 'Atracciones',
+      'wiki_tab_culture': 'Cultura',
+      'wiki_tab_emergency': 'Emergencia',
+      'wiki_top_locations': 'Top lugares',
+      'wiki_cultural_highlights': 'Cultura destacada',
+      'wiki_emergency_numbers': 'Números de emergencia',
+
+      // wiki content - bali
+      'bali_att_1': 'Playa de Kuta',
+      'bali_att_1_tip1': 'Lugar ideal para fotos al atardecer',
+      'bali_att_1_tip2': 'Popular para principiantes de surf',
+      'bali_att_2': 'Templo de Uluwatu',
+      'bali_att_2_tip1': 'Famoso templo en acantilado con vista al mar',
+      'bali_att_2_tip2': 'Danza Kecak cultural al atardecer',
+      'bali_cul_1': 'Danza balinesa',
+      'bali_cul_1_det': 'Danzas tradicionales Kecak y Legong realizadas en templos.',
+
+      // wiki content - yogyakarta
+      'yogy_att_1': 'Templo Borobudur',
+      'yogy_att_1_tip1': 'El templo budista más grande del mundo',
+      'yogy_att_2': 'Templo Prambanan',
+      'yogy_att_2_tip1': 'Impresionante complejo de templos hindúes',
+      'yogy_cul_1': 'Wayang Kulit',
+      'yogy_cul_1_det': 'Espectáculo de marionetas de sombra con historias de Rama/Shinta.',
+
+      // wiki content - jakarta
+      'jak_att_1': 'Ciudad Vieja (Kota Tua)',
+      'jak_att_1_tip1': 'Arquitectura colonial holandesa',
+      'jak_att_2': 'Las Mil Islas',
+      'jak_att_2_tip1': 'Escapada isleña desde la ciudad',
+      'jak_cul_1': 'Cultura Betawi',
+      'jak_cul_1_det': 'Cultura indígena de Yakarta con marionetas Ondel-ondel.',
+
+      // wiki content - raja ampat
+      'ra_att_1': 'Islas Wayag',
+      'ra_att_1_tip1': 'Vista icónica de islas kársticas',
+      'ra_att_2': 'Pueblo Arborek',
+      'ra_att_2_tip1': 'Pueblo pesquero tradicional de Papúa',
+      'ra_cul_1': 'Tradiciones de Papúa',
+      'ra_cul_1_det': 'Danzas tradicionales con trajes de plumas y conchas.',
+      'no_scenarios_for_level': 'No hay escenarios disponibles para el nivel {level}.',
     },
 
     'ru': {
@@ -560,6 +875,109 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ Неправильно. Вы сказали: "{spoken}".\n\nПодсказка: Попробуйте сказать "{correct}"',
       'all_done': 'Все вопросы выполнены!',
       'l_next' : 'Далее',
+      'beginner': 'Начинающий',
+      'intermediate': 'Средний',
+      'advanced': 'Продвинутый',
+      'expert': 'Эксперт',
+      'questions_not_available': 'Вопросы недоступны',
+      'error_try_again': 'Что-то пошло не так, пожалуйста, попробуйте еще раз.',
+      'learning_tab_listening': 'Аудирование',
+      'learning_tab_writing': 'Письмо',
+      'learning_tab_speaking': 'Говорение',
+
+      // destinations
+      'bali': 'Бали',
+      'yogyakarta': 'Джокьякарта',
+      'jakarta': 'Джакарта',
+      'raja_ampat': 'Раджа-Ампат',
+
+      // auth
+      'login_title': 'Indonesian for Tourist',
+      'signin_tab': 'Войти',
+      'signup_tab': 'Регистрация',
+      'email_label': 'Почта',
+      'password_label': 'Пароль',
+      'username_label': 'Имя пользователя',
+      'forgot_password_link': 'Забыли пароль?',
+      'signin_button': 'Войти',
+      'signup_button': 'Регистрация',
+      'create_account_button': 'Создать аккаунт',
+      'continue_with_google': 'Войти через Google',
+      'or_divider': 'ИЛИ',
+      'auth_error_filling': 'Все поля обязательны',
+      'reset_password_title': 'Сброс пароля',
+      'reset_password_desc': 'Введите email для получения ссылки.',
+      'send_reset_link_button': 'Отправить ссылку',
+      'back_to_login': 'Назад к входу',
+      'email_sent_title': 'Отправлено!',
+      'email_sent_desc': 'Ссылка для сброса отправлена на:',
+      'check_inbox_spam': 'Проверьте почту и папку спам.',
+
+      // home additions
+      'home_keep_it_up': '🔥 Так держать!',
+      'home_progress_of_lessons': '{current} из {total} уроков',
+      'home_user_not_found': 'Данные не найдены',
+
+      // levels
+      'select_your_level': '🎓 Выберите уровень',
+      'level_beginner': 'Начальный',
+      'level_intermediate': 'Средний',
+      'level_advanced': 'Продвинутый',
+
+      // settings additions
+      'logout_button': 'Выйти',
+      'logout_confirm_title': 'Выход',
+      'logout_confirm_content': 'Вы уверены, что хотите выйти?',
+      'cancel_button': 'Отмена',
+      'changes_saved_msg': 'Сохранено!',
+      'admin_tools_title': 'Админ',
+      'admin_upload_button': 'Загрузка данных',
+
+      // wiki ui
+      'wiki_all_destinations': 'Все направления',
+      'wiki_back': 'Назад',
+      'wiki_about_label': 'Об {title}',
+      'wiki_tab_attractions': 'Достоприм.',
+      'wiki_tab_culture': 'Культура',
+      'wiki_tab_emergency': 'Экстренное',
+      'wiki_top_locations': 'Топ места',
+      'wiki_cultural_highlights': 'Культура',
+      'wiki_emergency_numbers': 'Номера',
+
+      // wiki content - bali
+      'bali_att_1': 'Пляж Кута',
+      'bali_att_1_tip1': 'Идеальное место для закатных фото',
+      'bali_att_1_tip2': 'Популярно среди начинающих серферов',
+      'bali_att_2': 'Храм Улувату',
+      'bali_att_2_tip1': 'Знаменитый храм на скале с видом на океан',
+      'bali_att_2_tip2': 'Культурный танец Кечак на закате',
+      'bali_cul_1': 'Балийский танец',
+      'bali_cul_1_det': 'Традиционные танцы Кечак и Легонг, исполняемые в храмах.',
+
+      // wiki content - yogyakarta
+      'yogy_att_1': 'Храм Боробудур',
+      'yogy_att_1_tip1': 'Самый большой буддийский храм в мире',
+      'yogy_att_2': 'Храм Прамбанан',
+      'yogy_att_2_tip1': 'Потрясающий индуистский храмовый комплекс',
+      'yogy_cul_1': 'Ваянг Кулит',
+      'yogy_cul_1_det': 'Традиционное шоу теневых марионеток с историями Рамы и Шинты.',
+
+      // wiki content - jakarta
+      'jak_att_1': 'Старый город (Кота Туа)',
+      'jak_att_1_tip1': 'Голландская колониальная архитектура',
+      'jak_att_2': 'Тысяча островов',
+      'jak_att_2_tip1': 'Островной отдых вдали от города',
+      'jak_cul_1': 'Культура Бетави',
+      'jak_cul_1_det': 'Коренная культура Джакарты с куклами Ондел-ондел.',
+
+      // wiki content - raja ampat
+      'ra_att_1': 'Острова Ваяг',
+      'ra_att_1_tip1': 'Иконический вид на карстовые острова',
+      'ra_att_2': 'Деревня Арборек',
+      'ra_att_2_tip1': 'Традиционная папуасская рыбацкая деревня',
+      'ra_cul_1': 'Папуасские традиции',
+      'ra_cul_1_det': 'Традиционные танцы в костюмах из перьев и ракушек.',
+      'no_scenarios_for_level': 'Нет доступных сценариев для уровня {level}.',
     },
 
     'zh': {
@@ -698,6 +1116,109 @@ class LanguageService extends ChangeNotifier {
       'speaking_wrong': '❌ 错误。你说的是："{spoken}"。\n\n提示：试着说 "{correct}"',
       'all_done': '所有问题已完成！',
       'l_next' : '下一个',
+      'beginner': '初学者',
+      'intermediate': '中级',
+      'advanced': '高级',
+      'expert': '专家',
+      'questions_not_available': '暂无题目',
+      'error_try_again': '出错了，请稍后再试。',
+      'learning_tab_listening': '听力',
+      'learning_tab_writing': '写作',
+      'learning_tab_speaking': '口语',
+
+      // destinations
+      'bali': '巴厘岛',
+      'yogyakarta': '日惹',
+      'jakarta': '雅加达',
+      'raja_ampat': '拉贾安帕特',
+
+      // auth
+      'login_title': 'Indonesian for Tourist',
+      'signin_tab': '登录',
+      'signup_tab': '注册',
+      'email_label': '电子邮箱',
+      'password_label': '密码',
+      'username_label': '用户名',
+      'forgot_password_link': '忘记密码？',
+      'signin_button': '登录',
+      'signup_button': '注册',
+      'create_account_button': '创建账户',
+      'continue_with_google': '使用 Google 继续',
+      'or_divider': '或',
+      'auth_error_filling': '所有字段均为必填',
+      'reset_password_title': '重置密码',
+      'reset_password_desc': '输入您的邮箱，我们将发送重置链接。',
+      'send_reset_link_button': '发送链接',
+      'back_to_login': '返回登录',
+      'email_sent_title': '邮件已发送！',
+      'email_sent_desc': '重置链接已发送至：',
+      'check_inbox_spam': '请检查收件箱和垃圾邮件文件夹。',
+
+      // home additions
+      'home_keep_it_up': '🔥 继续加油！',
+      'home_progress_of_lessons': '{current} / {total} 课',
+      'home_user_not_found': '未找到用户数据',
+
+      // levels
+      'select_your_level': '🎓 选择您的级别',
+      'level_beginner': '初级',
+      'level_intermediate': '中级',
+      'level_advanced': '高级',
+
+      // settings additions
+      'logout_button': '退出',
+      'logout_confirm_title': '登出',
+      'logout_confirm_content': '您确定要退出吗？',
+      'cancel_button': '取消',
+      'changes_saved_msg': '更改已保存！',
+      'admin_tools_title': '管理员工具',
+      'admin_upload_button': '打开数据上传器',
+
+      // wiki ui
+      'wiki_all_destinations': '所有目的地',
+      'wiki_back': '返回',
+      'wiki_about_label': '关于 {title}',
+      'wiki_tab_attractions': '景点',
+      'wiki_tab_culture': '文化',
+      'wiki_tab_emergency': '紧急情况',
+      'wiki_top_locations': '热门地点',
+      'wiki_cultural_highlights': '文化亮点',
+      'wiki_emergency_numbers': '紧急号码',
+
+      // wiki content - bali
+      'bali_att_1': '库塔海滩',
+      'bali_att_1_tip1': '欣赏日落和摄影的理想地点',
+      'bali_att_1_tip2': '冲浪初学者的热门选择',
+      'bali_att_2': '乌鲁瓦图寺',
+      'bali_att_2_tip1': '著名的海滨悬崖寺庙',
+      'bali_att_2_tip2': '日落时的 Kecak 文化舞蹈',
+      'bali_cul_1': '巴厘岛舞蹈',
+      'bali_cul_1_det': '在寺庙中表演的传统 Kecak 和 Legong 舞蹈。',
+
+      // wiki content - yogyakarta
+      'yogy_att_1': '婆罗浮屠寺',
+      'yogy_att_1_tip1': '世界上最大的佛教寺庙',
+      'yogy_att_2': '普兰巴南寺',
+      'yogy_att_2_tip1': '令人惊叹的印度教寺庙群',
+      'yogy_cul_1': '皮影戏 (Wayang Kulit)',
+      'yogy_cul_1_det': '传统皮影戏，讲述 Rama/Shinta 的故事。',
+
+      // wiki content - jakarta
+      'jak_att_1': '老城区 (Kota Tua)',
+      'jak_att_1_tip1': '荷兰殖民时期建筑',
+      'jak_att_2': '千岛群岛',
+      'jak_att_2_tip1': '远离城市的岛屿假期',
+      'jak_cul_1': '巴达维文化',
+      'jak_cul_1_det': '雅加达本土文化，以 Ondel-ondel 傀儡为特色。',
+
+      // wiki content - raja ampat
+      'ra_att_1': '瓦亚格群岛',
+      'ra_att_1_tip1': '标志性的喀斯特岛屿景色',
+      'ra_att_2': '阿博雷克村',
+      'ra_att_2_tip1': '传统的巴布亚渔村',
+      'ra_cul_1': '巴布亚传统',
+      'ra_cul_1_det': '穿着羽毛和贝壳服饰的传统舞蹈。',
+      'no_scenarios_for_level': '{level} 级别暂无场景。',
     },
   };
 

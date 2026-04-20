@@ -5,6 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import 'language_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -64,27 +66,27 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  String _mapAuthError(FirebaseAuthException e, {required bool isSignUp}) {
+  String _mapAuthError(FirebaseAuthException e, {required bool isSignUp, required LanguageService lang}) {
     switch (e.code) {
       case 'email-already-in-use':
-        return 'Email sudah digunakan';
+        return lang.currentLang == 'id' ? 'Email sudah digunakan' : 'Email already in use';
       case 'user-not-found':
-        return 'Akun tidak ditemukan';
+        return lang.currentLang == 'id' ? 'Akun tidak ditemukan' : 'Account not found';
       case 'wrong-password':
-        return 'Password salah';
+        return lang.currentLang == 'id' ? 'Password salah' : 'Incorrect password';
       case 'invalid-credential':
       case 'invalid-login-credentials':
-        return 'Email atau password salah';
+        return lang.currentLang == 'id' ? 'Email atau password salah' : 'Invalid email or password';
       case 'weak-password':
-        return 'Password terlalu lemah (min 6 karakter)';
+        return lang.currentLang == 'id' ? 'Password terlalu lemah (min 6 karakter)' : 'Password too weak';
       case 'invalid-email':
-        return 'Format email tidak valid';
+        return lang.currentLang == 'id' ? 'Format email tidak valid' : 'Invalid email format';
       case 'user-disabled':
-        return 'Akun ini dinonaktifkan';
+        return lang.currentLang == 'id' ? 'Akun ini dinonaktifkan' : 'Account disabled';
       case 'too-many-requests':
-        return 'Terlalu banyak percobaan. Coba lagi beberapa saat.';
+        return lang.currentLang == 'id' ? 'Terlalu banyak percobaan. Coba lagi beberapa saat.' : 'Too many requests. Try again later.';
       default:
-        return e.message ?? 'Terjadi kesalahan autentikasi';
+        return e.message ?? (lang.currentLang == 'id' ? 'Terjadi kesalahan autentikasi' : 'Authentication error');
     }
   }
 
@@ -95,6 +97,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       body: Container(
         decoration: const BoxDecoration(
@@ -163,9 +166,9 @@ class _LoginScreenState extends State<LoginScreen>
 
                           const SizedBox(height: 20),
 
-                          const Text(
-                            'Indonesian for Tourist',
-                            style: TextStyle(
+                          Text(
+                            lang.t('login_title'),
+                            style: const TextStyle(
                               fontSize: 23,
                               fontWeight: FontWeight.w800,
                               color: Colors.white,
@@ -202,8 +205,8 @@ class _LoginScreenState extends State<LoginScreen>
                                   ),
                                   child: Row(
                                     children: [
-                                      _buildTab('Sign In', !isSignUp, () => _toggleMode(false)),
-                                      _buildTab('Sign Up', isSignUp, () => _toggleMode(true)),
+                                      _buildTab(lang.t('signin_tab'), !isSignUp, () => _toggleMode(false), lang: lang),
+                                      _buildTab(lang.t('signup_tab'), isSignUp, () => _toggleMode(true), lang: lang),
                                     ],
                                   ),
                                 ),
@@ -213,7 +216,7 @@ class _LoginScreenState extends State<LoginScreen>
                                 if (isSignUp) ...[
                                   _buildTextField(
                                     controller: usernameController,
-                                    label: 'Username',
+                                    label: lang.t('username_label'),
                                     icon: Icons.person_outline_rounded,
                                   ),
                                   const SizedBox(height: 14),
@@ -221,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 _buildTextField(
                                   controller: emailController,
-                                  label: 'Email',
+                                  label: lang.t('email_label'),
                                   icon: Icons.mail_outline_rounded,
                                   keyboardType: TextInputType.emailAddress,
                                 ),
@@ -230,7 +233,7 @@ class _LoginScreenState extends State<LoginScreen>
 
                                 _buildTextField(
                                   controller: passwordController,
-                                  label: 'Password',
+                                  label: lang.t('password_label'),
                                   icon: Icons.lock_outline_rounded,
                                   obscureText: _obscurePassword,
                                   suffixIcon: IconButton(
@@ -255,7 +258,7 @@ class _LoginScreenState extends State<LoginScreen>
                                           MaterialPageRoute(builder: (_) => const ForgotPasswordScreen()),
                                         );
                                       },
-                                      child: const Text('Forgot Password?', style: TextStyle(color: _accent)),
+                                      child: Text(lang.t('forgot_password_link'), style: const TextStyle(color: _accent)),
                                     ),
                                   ),
 
@@ -270,10 +273,10 @@ class _LoginScreenState extends State<LoginScreen>
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                                       elevation: 0,
                                     ),
-                                    onPressed: isSubmitting ? null : _handleSubmit,
+                                    onPressed: isSubmitting ? null : () => _handleSubmit(lang),
                                     child: isSubmitting
                                         ? const CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                                        : Text(isSignUp ? 'Create Account' : 'Sign In', 
+                                        : Text(isSignUp ? lang.t('create_account_button') : lang.t('signin_button'), 
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                                   ),
                                 ),
@@ -286,7 +289,7 @@ class _LoginScreenState extends State<LoginScreen>
                                     const Expanded(child: Divider()),
                                     Padding(
                                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                                      child: Text('OR', style: TextStyle(color: Colors.grey[400], fontSize: 12)),
+                                      child: Text(lang.t('or_divider'), style: TextStyle(color: Colors.grey[400], fontSize: 12)),
                                     ),
                                     const Expanded(child: Divider()),
                                   ],
@@ -311,7 +314,7 @@ class _LoginScreenState extends State<LoginScreen>
                                             children: [
                                               SvgPicture.asset('lib/widgets/google_logo.svg', width: 24, height: 24),
                                               const SizedBox(width: 10),
-                                              const Text('Continue with Google', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
+                                              Text(lang.t('continue_with_google'), style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w500)),
                                             ],
                                           ),
                                   ),
@@ -332,14 +335,14 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  Future<void> _handleSubmit() async {
+  Future<void> _handleSubmit(LanguageService lang) async {
     setState(() => isSubmitting = true);
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
     final username = usernameController.text.trim();
 
     if (email.isEmpty || password.isEmpty || (isSignUp && username.isEmpty)) {
-      _showMessage("Semua kolom wajib diisi");
+      _showMessage(lang.t('auth_error_filling'));
       setState(() => isSubmitting = false);
       return;
     }
@@ -363,9 +366,9 @@ class _LoginScreenState extends State<LoginScreen>
       if (!mounted) return;
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
     } on FirebaseAuthException catch (e) {
-      _showMessage(_mapAuthError(e, isSignUp: isSignUp));
+      _showMessage(_mapAuthError(e, isSignUp: isSignUp, lang: lang));
     } catch (e) {
-      _showMessage("Terjadi kesalahan: $e");
+      _showMessage("Error: $e");
     } finally {
       if (mounted) setState(() => isSubmitting = false);
     }
@@ -380,13 +383,13 @@ class _LoginScreenState extends State<LoginScreen>
         Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => const HomeScreen()));
       }
     } catch (e) {
-      _showMessage("Google Sign-In gagal: $e");
+      _showMessage("Google Sign-In failed: $e");
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
   }
 
-  Widget _buildTab(String label, bool active, VoidCallback onTap) {
+  Widget _buildTab(String label, bool active, VoidCallback onTap, {required LanguageService lang}) {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,

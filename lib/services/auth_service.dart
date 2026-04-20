@@ -4,7 +4,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 class AuthService {
   static final _auth = FirebaseAuth.instance;
-  static final _googleSignIn = GoogleSignIn();
+  static final _googleSignIn = GoogleSignIn(
+    serverClientId: '706326455197-68ncsvsce8tnbh6js880sa4i4kden4fc.apps.googleusercontent.com',
+  );
   static final _firestore = FirebaseFirestore.instance;
 
   /// Login dengan Google — mengembalikan User jika berhasil, null jika dibatalkan

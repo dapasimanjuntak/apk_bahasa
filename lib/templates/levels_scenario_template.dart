@@ -72,14 +72,10 @@ class LevelScenarioTemplate extends StatelessWidget {
                 children: [
                   const Icon(Icons.auto_awesome_mosaic_rounded, size: 60, color: Colors.grey),
                   const SizedBox(height: 16),
-                  Text("Belum ada skenario untuk level $levelTitle.", style: const TextStyle(color: Colors.grey)),
-                  const SizedBox(height: 10),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 40),
-                    child: Text(
-                      "Firestore: Buat dokumen di koleksi utama 'topics', dan pastikan punya field 'level' = '$levelKey'", 
-                      textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.blue)
-                    ),
+                  Text(
+                    lang.t('no_scenarios_for_level', params: {'level': levelTitle}),
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.grey),
                   ),
                 ],
               ),

@@ -95,9 +95,9 @@ class LevelScreen extends StatelessWidget {
                             color: Colors.white.withOpacity(0.18),
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Text(
-                            '🎓 Select Your Level',
-                            style: TextStyle(
+                          child: Text(
+                            lang.t('select_your_level'),
+                            style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -141,7 +141,7 @@ class LevelScreen extends StatelessWidget {
                 subtitle: lang.t('lvl1_sub'),
                 gradient: const [Color(0xFF43E97B), Color(0xFF38F9D7)],
                 shadowColor: Color(0xFF43E97B),
-                badge: 'Beginner',
+                badge: lang.t('level_beginner'),
                 badgeColor: const Color(0xFF22C55E),
               ),
 
@@ -155,7 +155,7 @@ class LevelScreen extends StatelessWidget {
                 subtitle: lang.t('lvl2_sub'),
                 gradient: const [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
                 shadowColor: Color(0xFF4F80FF),
-                badge: 'Intermediate',
+                badge: lang.t('level_intermediate'),
                 badgeColor: const Color(0xFF4F80FF),
               ),
 
@@ -169,7 +169,7 @@ class LevelScreen extends StatelessWidget {
                 subtitle: lang.t('lvl3_sub'),
                 gradient: const [Color(0xFFFF6B6B), Color(0xFFFFB347)],
                 shadowColor: Color(0xFFFF6B6B),
-                badge: 'Advanced',
+                badge: lang.t('level_advanced'),
                 badgeColor: const Color(0xFFEF4444),
               ),
 

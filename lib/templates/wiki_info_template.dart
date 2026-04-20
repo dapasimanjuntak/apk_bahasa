@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../screens/language_service.dart';
 
 class WikiInfoTemplate extends StatefulWidget {
   final String title;
@@ -25,14 +27,15 @@ class WikiInfoTemplate extends StatefulWidget {
 class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
   int selectedSegment = 0;
 
-  final List<String> segments = [
-    "Attractions",
-    "Culture & Phrases",
-    "Emergency"
+  final List<String> segmentKeys = [
+    "wiki_tab_attractions",
+    "wiki_tab_culture",
+    "wiki_tab_emergency"
   ];
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       appBar: AppBar(
         leading: const BackButton(),
@@ -74,7 +77,7 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "About ${widget.title}",
+                        lang.t('wiki_about_label', params: {'title': widget.title}),
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -100,7 +103,7 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: Row(
-                  children: List.generate(segments.length, (index) {
+                  children: List.generate(segmentKeys.length, (index) {
                     final isSelected = selectedSegment == index;
                     return Expanded(
                       child: GestureDetector(
@@ -129,7 +132,7 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
                           ),
                           child: Center(
                             child: Text(
-                              segments[index],
+                              lang.t(segmentKeys[index]),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: 13,
@@ -162,10 +165,10 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: selectedSegment == 0
-                      ? attractionsContent()
+                      ? attractionsContent(lang)
                       : selectedSegment == 1
-                      ? cultureContent()
-                      : emergencyContent(),
+                      ? cultureContent(lang)
+                      : emergencyContent(lang),
                 ),
               ),
             ),
@@ -179,17 +182,17 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
 
   // ===== CONTENT FUNCTIONS =====
 
-  Widget attractionsContent() {
+  Widget attractionsContent(LanguageService lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          children: const [
-            Icon(Icons.star, color: Colors.yellow),
-            SizedBox(width: 8),
+          children: [
+            const Icon(Icons.star, color: Colors.yellow),
+            const SizedBox(width: 8),
             Text(
-              "Top Locations",
-              style: TextStyle(
+              lang.t('wiki_top_locations'),
+              style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -201,8 +204,8 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
           return Column(
             children: [
               infoCard(
-                place['name'] as String,
-                List<String>.from(place['tips']),
+                lang.t(place['name'] as String),
+                List<String>.from(place['tips']).map((tip) => lang.t(tip)).toList(),
                 Icons.place,
                 Colors.green,
               ),
@@ -214,13 +217,13 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
     );
   }
 
-  Widget cultureContent() {
+  Widget cultureContent(LanguageService lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Cultural Highlights",
-          style: TextStyle(
+        Text(
+          lang.t('wiki_cultural_highlights'),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),
@@ -230,8 +233,8 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
           return Column(
             children: [
               infoCard(
-                item['name'] as String,
-                List<String>.from(item['details']),
+                lang.t(item['name'] as String),
+                List<String>.from(item['details']).map((det) => lang.t(det)).toList(),
                 Icons.auto_awesome,
                 Colors.purple,
               ),
@@ -243,13 +246,13 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
     );
   }
 
-  Widget emergencyContent() {
+  Widget emergencyContent(LanguageService lang) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "Emergency Numbers",
-          style: TextStyle(
+        Text(
+          lang.t('wiki_emergency_numbers'),
+          style: const TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
           ),

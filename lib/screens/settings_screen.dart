@@ -184,7 +184,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
                       onPressed: _handleLogout,
-                      child: const Text("Logout", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      child: Text(lang.t('logout_button'), style: const TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
                     ),
                   ),
                 ],
@@ -196,7 +196,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildSectionHeader(Icons.admin_panel_settings_rounded, "Admin Tools", Colors.grey[700]!, Colors.grey[100]!),
+                    _buildSectionHeader(Icons.admin_panel_settings_rounded, lang.t('admin_tools_title'), Colors.grey[700]!, Colors.grey[100]!),
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -208,7 +208,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         },
                         icon: const Icon(Icons.cloud_upload_rounded),
-                        label: const Text("Buka Pengunggah Soal (Suntik Data)"),
+                        label: Text(lang.t('admin_upload_button')),
                         style: TextButton.styleFrom(
                           foregroundColor: Colors.blue[700],
                           backgroundColor: Colors.blue[50],
@@ -238,7 +238,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await FirebaseFirestore.instance.collection('users').doc(user.uid).update({'username': newUsername});
       await user.updateDisplayName(newUsername);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Changes saved!")));
+      final lang = Provider.of<LanguageService>(context, listen: false);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(lang.t('changes_saved_msg'))));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Error: $e")));
     } finally {
@@ -247,14 +248,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _handleLogout() async {
+    final lang = Provider.of<LanguageService>(context, listen: false);
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
+        title: Text(lang.t('logout_confirm_title')),
+        content: Text(lang.t('logout_confirm_content')),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Logout', style: TextStyle(color: Colors.red))),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(lang.t('cancel_button'))),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(lang.t('logout_button'), style: const TextStyle(color: Colors.red))),
         ],
       ),
     );

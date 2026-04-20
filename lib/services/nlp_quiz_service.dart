@@ -97,8 +97,20 @@ class NlpQuizService {
     required String languageCode,
   }) {
     final cleanedUser = _cleanText(jawabanUser);
-    final cleanedCorrect = _cleanText(jawabanBenar);
-    final similarity = _jaccardSimilarity(cleanedUser, cleanedCorrect);
+    
+    // Support multiple correct answers separated by '|'
+    final correctOptions = jawabanBenar.split('|').map((e) => _cleanText(e)).toList();
+    
+    double maxSimilarity = 0.0;
+    String bestMatch = correctOptions.first;
+
+    for (var option in correctOptions) {
+      final similarity = _calculateSmartSimilarity(cleanedUser, option);
+      if (similarity > maxSimilarity) {
+        maxSimilarity = similarity;
+        bestMatch = option;
+      }
+    }
 
     final reasons = {
       'en': 'Evaluated using an offline evaluation system (API not responding).',
@@ -110,12 +122,56 @@ class NlpQuizService {
     final reason = reasons[languageCode] ?? reasons['en']!;
 
     return AnswerEvaluation(
-      similarity: similarity,
-      status: _resolveStatus(similarity, null),
+      similarity: maxSimilarity,
+      status: _resolveStatus(maxSimilarity, null),
       cleanedUserAnswer: cleanedUser,
-      cleanedCorrectAnswer: cleanedCorrect,
+      cleanedCorrectAnswer: bestMatch,
       reason: reason,
     );
+  }
+
+  double _calculateSmartSimilarity(String user, String target) {
+    if (user.isEmpty || target.isEmpty) return 0.0;
+    if (user == target) return 1.0;
+
+    // 1. Jaccard Similarity (Token based)
+    final jaccard = _jaccardSimilarity(user, target);
+
+    // 2. Simple Fuzzy Word Match (Check if words in user exist in target or vice versa)
+    final userTokens = user.split(' ').where((e) => e.isNotEmpty).toList();
+    final targetTokens = target.split(' ').where((e) => e.isNotEmpty).toList();
+    
+    int matches = 0;
+    for (var uToken in userTokens) {
+      if (targetTokens.any((tToken) => _isFuzzyMatch(uToken, tToken))) {
+        matches++;
+      }
+    }
+    
+    final fuzzyFactor = matches / (userTokens.length > targetTokens.length ? userTokens.length : targetTokens.length);
+
+    // Combine both (weighted)
+    return (jaccard * 0.4) + (fuzzyFactor * 0.6);
+  }
+
+  bool _isFuzzyMatch(String a, String b) {
+    if (a == b) return true;
+    if (a.length < 3 || b.length < 3) return false;
+    
+    // Common mappings (Polisi -> Petugas, etc) for Indonesian context
+    final commonSynonyms = {
+      'polisi': 'petugas',
+      'officer': 'petugas',
+      'halo': 'selamat',
+      'hi': 'halo',
+    };
+    
+    if (commonSynonyms[a] == b || commonSynonyms[b] == a) return true;
+
+    // Basic substring check
+    if (a.contains(b) || b.contains(a)) return true;
+    
+    return false;
   }
 
   String _cleanText(String text) {
@@ -142,8 +198,9 @@ class NlpQuizService {
       return backendStatus.trim().toLowerCase();
     }
 
-    if (similarity >= 0.80) return 'benar';
-    if (similarity >= 0.50) return 'hampir benar';
+    // Lower threshold for a more encouraging experience
+    if (similarity >= 0.70) return 'benar';
+    if (similarity >= 0.40) return 'hampir benar';
     return 'kurang tepat';
   }
 }

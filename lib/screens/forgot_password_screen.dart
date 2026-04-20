@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
+import 'language_service.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -23,8 +25,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final email = _emailController.text.trim();
 
     if (email.isEmpty) {
+      final lang = Provider.of<LanguageService>(context, listen: false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email address.')),
+        SnackBar(content: Text(lang.t('auth_error_filling'))),
       );
       return;
     }
@@ -38,12 +41,14 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         _isLoading = false;
       });
     } on FirebaseAuthException catch (e) {
+      setState(() => _isLoading = true); // Wait, should be false in catch
       setState(() => _isLoading = false);
-      String message = 'An error occurred. Please try again.';
+      final lang = Provider.of<LanguageService>(context, listen: false);
+      String message = lang.currentLang == 'id' ? 'Terjadi kesalahan. Silakan coba lagi.' : 'An error occurred. Please try again.';
       if (e.code == 'user-not-found') {
-        message = 'No account found with this email.';
+        message = lang.currentLang == 'id' ? 'Akun tidak ditemukan.' : 'No account found with this email.';
       } else if (e.code == 'invalid-email') {
-        message = 'The email address format is invalid.';
+        message = lang.currentLang == 'id' ? 'Format email tidak valid.' : 'The email address format is invalid.';
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -58,6 +63,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
@@ -67,9 +73,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           icon: const Icon(Icons.arrow_back, color: Color(0xFF222222)),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Forgot Password',
-          style: TextStyle(
+        title: Text(
+          lang.t('forgot_password_link').replaceAll('?', ''),
+          style: const TextStyle(
             color: Color(0xFF222222),
             fontWeight: FontWeight.bold,
             fontSize: 18,
@@ -80,7 +86,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: _emailSent ? _buildSuccessView() : _buildFormView(),
+            child: _emailSent ? _buildSuccessView(lang) : _buildFormView(lang),
           ),
         ),
       ),
@@ -88,7 +94,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   /// --- View: Form Reset ---
-  Widget _buildFormView() {
+  Widget _buildFormView(LanguageService lang) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -106,9 +112,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 28),
 
         // Judul
-        const Text(
-          'Reset Your Password',
-          style: TextStyle(
+        Text(
+          lang.t('reset_password_title'),
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF1A1A2E),
@@ -117,10 +123,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         const SizedBox(height: 10),
 
-        const Text(
-          "Enter your email below and we will send you a link to reset your password.",
+        Text(
+          lang.t('reset_password_desc'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
+          style: const TextStyle(fontSize: 14, color: Colors.black54, height: 1.5),
         ),
 
         const SizedBox(height: 32),
@@ -142,9 +148,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Email Address',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+              Text(
+                lang.t('email_label'),
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
               ),
               const SizedBox(height: 8),
               TextField(
@@ -196,9 +202,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text(
-                          'Send Reset Link',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      : Text(
+                          lang.t('send_reset_link_button'),
+                          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
                         ),
                 ),
               ),
@@ -211,9 +217,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         // Kembali ke login
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text(
-            'Back to Login',
-            style: TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
+          child: Text(
+            lang.t('back_to_login'),
+            style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.w500),
           ),
         ),
       ],
@@ -221,7 +227,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   }
 
   /// --- View: Sukses Kirim Email ---
-  Widget _buildSuccessView() {
+  Widget _buildSuccessView(LanguageService lang) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -237,9 +243,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
         const SizedBox(height: 28),
 
-        const Text(
-          'Email Sent!',
-          style: TextStyle(
+        Text(
+          lang.t('email_sent_title'),
+          style: const TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
             color: Color(0xFF1A1A2E),
@@ -249,17 +255,17 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
         const SizedBox(height: 12),
 
         Text(
-          "A password reset link has been sent to:\n${_emailController.text.trim()}",
+          "${lang.t('email_sent_desc')}\n${_emailController.text.trim()}",
           textAlign: TextAlign.center,
           style: const TextStyle(fontSize: 14, color: Colors.black54, height: 1.6),
         ),
 
         const SizedBox(height: 12),
 
-        const Text(
-          "Please check your inbox and spam folder.",
+        Text(
+          lang.t('check_inbox_spam'),
           textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 13, color: Colors.black45),
+          style: const TextStyle(fontSize: 13, color: Colors.black45),
         ),
 
         const SizedBox(height: 32),
@@ -277,9 +283,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Back to Login',
-              style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+            child: Text(
+              lang.t('back_to_login'),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
             ),
           ),
         ),

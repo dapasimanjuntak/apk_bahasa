@@ -7,6 +7,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../screens/wiki_screen.dart';
 import 'package:provider/provider.dart';
 import 'language_service.dart';
+import '../templates/learning_template.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -123,7 +124,7 @@ class HomeScreen extends StatelessWidget {
 
           // ⬇️ CEK DOKUMEN ADA ATAU TIDAK
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return const Center(child: Text("User data not found"));
+            return Center(child: Text(lang.t('home_user_not_found')));
           }
 
           // ⬇️ AMBIL DATA FIRESTORE
@@ -138,6 +139,10 @@ class HomeScreen extends StatelessWidget {
 
           final firstLetter =
           username.isNotEmpty ? username[0].toUpperCase() : 'U';
+
+          // ⬇️ AMBIL currentScenario & currentLevel dari Firestore user data
+          final String? currentScenario = data['currentScenario'] as String?;
+          final String? currentLevel = data['currentLevel'] as String?;
 
           return SafeArea(
             child: SingleChildScrollView(
@@ -159,6 +164,17 @@ class HomeScreen extends StatelessWidget {
                   ),
 
                   const SizedBox(height: 16),
+
+                  // ── Card 1.5: Active Course Dashboard ───────────────────────
+                  if (currentScenario != null)
+                    _ActiveCourseCard(
+                      scenario: currentScenario,
+                      level: currentLevel ?? 'beginner',
+                      progress: progressValue,
+                      lang: lang,
+                    ),
+
+                  if (currentScenario != null) const SizedBox(height: 16),
 
                   // ── Card 2: Start Learning ─────────────────────────────────
                   _LearningCard(lang: lang),
@@ -351,9 +367,9 @@ class _HeroCard extends StatelessWidget {
                               color: Colors.white.withOpacity(0.18),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: const Text(
-                              '🔥 Keep it up!',
-                              style: TextStyle(
+                            child: Text(
+                              lang.t('home_keep_it_up'),
+                              style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
@@ -442,7 +458,10 @@ class _HeroCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 Text(
-                  "${(progress * 18).toInt()} of 18 lessons",
+                  lang.t('home_progress_of_lessons', params: {
+                    'current': '${(progress * 18).toInt()}',
+                    'total': '18',
+                  }),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.65),
                     fontSize: 12,
@@ -783,6 +802,191 @@ class _WikiCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ── Active Course Card ────────────────────────────────────────────────────────
+class _ActiveCourseCard extends StatelessWidget {
+  final String scenario;
+  final String level;
+  final double progress;
+  final LanguageService lang;
+
+  const _ActiveCourseCard({
+    required this.scenario,
+    required this.level,
+    required this.progress,
+    required this.lang,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    const accent = Color(0xFF4F80FF);
+    // User currentLang often matches scenario key or translations
+    final scenarioTitle = lang.t(scenario) != scenario 
+        ? lang.t(scenario) 
+        : scenario.split('_').map((e) => e[0].toUpperCase() + e.substring(1)).join(' ');
+
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  scenarioTitle,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: Color(0xFF1A1F36),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "${lang.t(level)} • ${lang.t('learning_tab_listening')}",
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.grey.shade500,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Progress Bar
+                Stack(
+                  children: [
+                    Container(
+                      height: 10,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    FractionallySizedBox(
+                      widthFactor: progress.clamp(0.0, 1.0),
+                      child: Container(
+                        height: 10,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [accent, Color(0xFF7B5FFF)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: accent.withOpacity(0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  lang.t('home_completed_label', params: {'percent': '${(progress * 100).toInt()}'}),
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Action Buttons / Tabs
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF8FAFC),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(24),
+                bottomRight: Radius.circular(24),
+              ),
+              border: Border(top: BorderSide(color: Colors.grey.shade100)),
+            ),
+            child: Row(
+              children: [
+                _QuickNavAction(
+                  label: lang.t('learning_tab_listening'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LearningTemplate(level: level, scenario: scenario, type: 'listening'))),
+                ),
+                const SizedBox(width: 8),
+                _QuickNavAction(
+                  label: lang.t('learning_tab_writing'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LearningTemplate(level: level, scenario: scenario, type: 'writing'))),
+                ),
+                const SizedBox(width: 8),
+                _QuickNavAction(
+                  label: lang.t('learning_tab_speaking'),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => LearningTemplate(level: level, scenario: scenario, type: 'speaking'))),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _QuickNavAction extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+
+  const _QuickNavAction({required this.label, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xFFE2E8F0)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF334155),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

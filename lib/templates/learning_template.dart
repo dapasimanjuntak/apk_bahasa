@@ -36,7 +36,11 @@ class _LearningTemplateState extends State<LearningTemplate> {
   bool isLoading = false;
   bool isScenarioCompleted = false;
   final List<int> segmentQuestionIndex = [0, 0, 0];
-  final List<String> segments = ["Listening", "Writing", "Speaking"];
+  final List<String> segmentKeys = [
+    "learning_tab_listening",
+    "learning_tab_writing",
+    "learning_tab_speaking"
+  ];
   final AudioPlayer player = AudioPlayer();
   final FlutterTts flutterTts = FlutterTts();
   final SpeechToText _speechToText = SpeechToText();
@@ -276,12 +280,12 @@ class _LearningTemplateState extends State<LearningTemplate> {
         ),
       );
     }
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(40),
+        padding: const EdgeInsets.all(40),
         child: Text(
-          "Soal belum tersedia",
-          style: TextStyle(color: Color(0xFF888888)),
+          Provider.of<LanguageService>(context, listen: false).t('questions_not_available'),
+          style: const TextStyle(color: Color(0xFF888888)),
         ),
       ),
     );
@@ -683,7 +687,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
               } catch (e) {
                 if (mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("There something wrong please try again.")),
+                    SnackBar(content: Text(lang.t('error_try_again'))),
                   );
                 }
                 setState(() => isLoading = false);
@@ -876,147 +880,146 @@ class _LearningTemplateState extends State<LearningTemplate> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: const Text(
-          "Learning",
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
+        leading: BackButton(onPressed: () => Navigator.pop(context)),
+        title: Text(
+          lang.t(segmentKeys[selectedSegment]),
+          style: const TextStyle(
+            color: Color(0xFF1E1B4B),
+            fontWeight: FontWeight.bold,
             fontSize: 18,
-            color: Color(0xFF222222),
           ),
         ),
+        centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
-        surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Color(0xFF222222)),
+        actions: [
+          IconButton(
+            onPressed: () {},
+            icon: const Icon(Icons.info_outline, color: Color(0xFF1E1B4B)),
+          ),
+        ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      body: SafeArea(
         child: Column(
           children: [
-            // ── CARD 1: Info scenario + progress + segmen nav ──────────
+            // ── Progress Bar Section ──────────────────────────────
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
+              margin: const EdgeInsets.only(left: 20, right: 20, top: 18, bottom: 2),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.scenario,
                     style: const TextStyle(
-                      fontSize: 16,
                       fontWeight: FontWeight.w700,
+                      fontSize: 16,
                       color: Color(0xFF222222),
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    "${widget.level}  •  ${widget.type}",
+                    "${widget.level}  •  ${lang.t(segmentKeys[selectedSegment])}",
                     style: const TextStyle(
-                      fontSize: 12,
+                      fontSize: 13,
                       color: Color(0xFF888888),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: LinearProgressIndicator(
-                      value: scenarioProgress,
-                      minHeight: 7,
-                      backgroundColor: const Color(0xFFE8E8E8),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFF2196F3)),
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  Text(
-                    lang.t('l_completed', params: {
-                      'percent': (scenarioProgress * 100).toInt().toString()
-                    }),
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Color(0xFF888888),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Segment navigator
-                  Container(
-                    padding: const EdgeInsets.all(4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEEEEEE),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Row(
-                      children: List.generate(segments.length, (index) {
-                        final isActive = selectedSegment == index;
-                        return Expanded(
-                          child: GestureDetector(
-                            onTap: () => setState(() {
-                              segmentQuestionIndex[selectedSegment] =
-                                  questionIndex;
-                              selectedSegment = index;
-                              questionIndex = segmentQuestionIndex[index];
-                            }),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 200),
-                              padding:
-                              const EdgeInsets.symmetric(vertical: 9),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? Colors.white
-                                    : Colors.transparent,
-                                borderRadius: BorderRadius.circular(9),
-                                boxShadow: isActive
-                                    ? [
-                                  BoxShadow(
-                                    color:
-                                    Colors.black.withOpacity(0.08),
-                                    blurRadius: 4,
-                                    offset: const Offset(0, 1),
-                                  ),
-                                ]
-                                    : [],
-                              ),
-                              child: Text(
-                                segments[index],
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: isActive
-                                      ? FontWeight.w600
-                                      : FontWeight.w400,
-                                  color: isActive
-                                      ? const Color(0xFF222222)
-                                      : const Color(0xFF888888),
-                                ),
-                              ),
+                  const SizedBox(height: 10),
+                  Stack(
+                    children: [
+                      Container(
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF2196F3).withOpacity(0.13),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          return Container(
+                            height: 6,
+                            width: constraints.maxWidth * scenarioProgress,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF2196F3),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "${(scenarioProgress * 100).toStringAsFixed(0)}% selesai",
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF888888),
                     ),
                   ),
                 ],
               ),
             ),
 
+            // ── Tab Bar (Custom Segmented) ──────────────────────────
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(30),
+              ),
+              child: Row(
+                children: List.generate(segmentKeys.length, (index) {
+                  final isSelected = selectedSegment == index;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          segmentQuestionIndex[selectedSegment] = questionIndex;
+                          selectedSegment = index;
+                          questionIndex = segmentQuestionIndex[index];
+                        });
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          color: isSelected ? Colors.white : Colors.transparent,
+                          borderRadius: BorderRadius.circular(25),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 2),
+                                  )
+                                ]
+                              : [],
+                        ),
+                        child: Text(
+                          lang.t(segmentKeys[index]),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                            color: isSelected ? const Color(0xFF2196F3) : const Color(0xFF64748B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+
             const SizedBox(height: 14),
 
-            // ── CARD 2: Konten soal ────────────────────────────────────
+            // ── Konten soal ────────────────────────────────────
             Expanded(
               child: Container(
                 width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   color: Colors.white,

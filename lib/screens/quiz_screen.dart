@@ -8,6 +8,7 @@ import '../models/nlp_question.dart';
 import '../services/nlp_quiz_service.dart';
 import '../templates/levels_scenario_template.dart';
 import 'language_service.dart';
+import 'level_screen.dart';
 
 class QuizScreen extends StatefulWidget {
   final String level;
@@ -260,15 +261,20 @@ class _QuizScreenState extends State<QuizScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: () {
-                  Navigator.pushAndRemoveUntil(
+                  // Reconstruct the stack: Home -> Level -> Scenarios
+                  Navigator.popUntil(context, (route) => route.isFirst);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => LevelScreen()),
+                  );
+                  Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => LevelScenarioTemplate(
-                        levelTitle: widget.level,
+                        levelTitle: lang.t(widget.level),
                         levelKey: widget.level,
                       ),
                     ),
-                    (route) => false,
                   );
                 },
                 child: Text(lang.t('quiz_back_menu'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
@@ -307,7 +313,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: Text("${widget.scenario.toUpperCase()} ${lang.t('quiz_title')}"),
+        title: Text("${lang.t(widget.scenario).toUpperCase()} ${lang.t('quiz_title')}"),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
