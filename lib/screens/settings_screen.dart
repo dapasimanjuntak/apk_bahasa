@@ -191,36 +191,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const SizedBox(height: 32),
 
-              // Admin Section (Temporary for Upload)
-              _buildCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildSectionHeader(Icons.admin_panel_settings_rounded, lang.t('admin_tools_title'), Colors.grey[700]!, Colors.grey[100]!),
-                    const SizedBox(height: 16),
-                    SizedBox(
-                      width: double.infinity,
-                      child: TextButton.icon(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const UploadDataScreen()),
-                          );
-                        },
-                        icon: const Icon(Icons.cloud_upload_rounded),
-                        label: Text(lang.t('admin_upload_button')),
-                        style: TextButton.styleFrom(
-                          foregroundColor: Colors.blue[700],
-                          backgroundColor: Colors.blue[50],
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 24),
+
             ],
           ),
         ),

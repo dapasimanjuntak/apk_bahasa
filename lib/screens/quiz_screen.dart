@@ -313,7 +313,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F6FA),
       appBar: AppBar(
-        title: Text("${lang.t(widget.scenario).toUpperCase()} ${lang.t('quiz_title')}"),
+        title: Text("${lang.t(widget.scenario.split('_').last).toUpperCase()} ${lang.t('quiz_title')}"),
         backgroundColor: Colors.white,
         elevation: 0,
       ),

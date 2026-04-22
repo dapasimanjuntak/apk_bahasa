@@ -20,10 +20,17 @@ class NlpQuizService {
     required String scenario,
     required String languageCode,
   }) async {
+    // Gunakan scenario ID langsung (misal: 'beginner_airport' atau 'expert_airport')
+    // Jika tidak mengandung '_', coba buat ID dari level_scenario
+    String docId = scenario.toLowerCase();
+    if (!docId.contains('_') && level.isNotEmpty) {
+      docId = '${level.toLowerCase()}_$docId';
+    }
+
     final snapshot = await _firestore
-        .collection('topics') // Mengambil dari koleksi utama 'topics'
-        .doc(scenario.toLowerCase()) // Langsung membaca nama tema (misal: 'airport')
-        .collection('items') // Di dalam tema, akan ada sub-koleksi 'items' tempat soal berada
+        .collection('topics')
+        .doc(docId)
+        .collection('items')
         .get();
 
     final questions = snapshot.docs

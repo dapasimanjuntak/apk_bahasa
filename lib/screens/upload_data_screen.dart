@@ -210,6 +210,24 @@ class _UploadDataScreenState extends State<UploadDataScreen> {
 
     try {
       final firestore = FirebaseFirestore.instance;
+
+      setState(() {
+        _status = "Menghapus data lama...";
+      });
+
+      // Clear existing topics first to fix any corrupted levels
+      final existingTopics = await firestore.collection('topics').get();
+      for (var doc in existingTopics.docs) {
+        final existingItems = await doc.reference.collection('items').get();
+        for (var item in existingItems.docs) {
+          await item.reference.delete();
+        }
+        await doc.reference.delete();
+      }
+
+      setState(() {
+        _status = "Mengunggah data baru...";
+      });
       
       for (var group in _data) {
         String level = group['level'];
