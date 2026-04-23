@@ -20,7 +20,7 @@ class HomeScreen extends StatelessWidget {
     final uid = user?.uid;
     final lang = Provider.of<LanguageService>(context);
 
-    // ✅ CEK USER LOGIN - redirect ke LoginScreen jika tidak ada sesi
+    //  CEK USER LOGIN - redirect ke LoginScreen jika tidak ada sesi
     if (uid == null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         Navigator.pushAndRemoveUntil(
@@ -29,13 +29,11 @@ class HomeScreen extends StatelessWidget {
           (route) => false,
         );
       });
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         backgroundColor: Colors.white,
@@ -46,14 +44,9 @@ class HomeScreen extends StatelessWidget {
           preferredSize: const Size.fromHeight(1),
           child: Container(color: const Color(0xFFE8EEFF), height: 1),
         ),
-        title: Row(
-          children: const [
-            SizedBox(width: 16),
-            _AppLogo(),
-          ],
-        ),
+        title: Row(children: const [SizedBox(width: 16), const AppLogo()]),
         actions: [
-          _NavIconButton(
+          NavIconButton(
             icon: Icons.home_rounded,
             onPressed: (context) {
               Navigator.pushReplacement(
@@ -62,7 +55,7 @@ class HomeScreen extends StatelessWidget {
               );
             },
           ),
-          _NavIconButton(
+          NavIconButton(
             icon: Icons.explore_rounded,
             onPressed: (context) {
               Navigator.push(
@@ -73,48 +66,54 @@ class HomeScreen extends StatelessWidget {
           ),
           Padding(
             padding: const EdgeInsets.only(right: 14),
-            child: Builder(builder: (ctx) {
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    ctx,
-                    MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                  );
-                },
-                child: Container(
-                  width: 36,
-                  height: 36,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: const Color(0xFF4F80FF).withOpacity(0.35),
-                        blurRadius: 8,
-                        offset: const Offset(0, 3),
+            child: Builder(
+              builder: (ctx) {
+                return GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      ctx,
+                      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+                    );
+                  },
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
                       ),
-                    ],
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4F80FF).withOpacity(0.35),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.person_rounded,
+                      size: 18,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: const Icon(Icons.person_rounded, size: 18, color: Colors.white),
-                ),
-              );
-            }),
+                );
+              },
+            ),
           ),
         ],
       ),
 
-      // ⬇️ AMBIL DATA FIRESTORE
+      // AMBIL DATA FIRESTORE
       body: StreamBuilder<DocumentSnapshot>(
         stream: FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
             .snapshots(),
         builder: (context, snapshot) {
-          // ⬇️ LOADING
+          //  LOADING
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(
@@ -124,25 +123,26 @@ class HomeScreen extends StatelessWidget {
             );
           }
 
-          // ⬇️ CEK DOKUMEN ADA ATAU TIDAK
+          // CEK DOKUMEN ADA ATAU TIDAK
           if (!snapshot.hasData || !snapshot.data!.exists) {
             return Center(child: Text(lang.t('home_user_not_found')));
           }
 
-          // ⬇️ AMBIL DATA FIRESTORE
+          //  AMBIL DATA FIRESTORE
           final data = snapshot.data!.data() as Map<String, dynamic>;
           final username = data['username'] ?? 'User';
 
-          // ⬇️ AMBIL PROGRESS & QUIZ SEBAGAI DOUBLE
+          //  AMBIL PROGRESS & QUIZ SEBAGAI DOUBLE
           final progressValue = ((data['progress'] ?? 0) as num).toDouble();
-          final quizPercent = data.containsKey('quiz_percent') 
-              ? (data['quiz_percent'] as num).toDouble() 
+          final quizPercent = data.containsKey('quiz_percent')
+              ? (data['quiz_percent'] as num).toDouble()
               : 0.0;
 
-          final firstLetter =
-          username.isNotEmpty ? username[0].toUpperCase() : 'U';
+          final firstLetter = username.isNotEmpty
+              ? username[0].toUpperCase()
+              : 'U';
 
-          // ⬇️ AMBIL currentScenario & currentLevel dari Firestore user data
+          //  AMBIL currentScenario & currentLevel dari Firestore user data
           final String? currentScenario = data['currentScenario'] as String?;
           final String? currentLevel = data['currentLevel'] as String?;
 
@@ -167,7 +167,6 @@ class HomeScreen extends StatelessWidget {
 
                   const SizedBox(height: 16),
 
-
                   // ── Card 2: Start Learning ─────────────────────────────────
                   _LearningCard(lang: lang),
 
@@ -191,8 +190,8 @@ class HomeScreen extends StatelessWidget {
 // WIDGETS
 // ─────────────────────────────────────────────────────────────────────────────
 
-class _AppLogo extends StatelessWidget {
-  const _AppLogo();
+class AppLogo extends StatelessWidget {
+  const AppLogo({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -216,10 +215,7 @@ class _AppLogo extends StatelessWidget {
           child: SizedBox(
             width: 24,
             height: 24,
-            child: Image.asset(
-              'assets/app_icon.png',
-              fit: BoxFit.contain,
-            ),
+            child: Image.asset('assets/app_icon.png', fit: BoxFit.contain),
           ),
         ),
         const SizedBox(width: 8),
@@ -237,11 +233,11 @@ class _AppLogo extends StatelessWidget {
   }
 }
 
-class _NavIconButton extends StatelessWidget {
+class NavIconButton extends StatelessWidget {
   final IconData icon;
   final void Function(BuildContext) onPressed;
 
-  const _NavIconButton({required this.icon, required this.onPressed});
+  const NavIconButton({super.key, required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -365,7 +361,9 @@ class _HeroCard extends StatelessWidget {
                           const SizedBox(height: 2),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 2),
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.18),
                               borderRadius: BorderRadius.circular(20),
@@ -461,10 +459,13 @@ class _HeroCard extends StatelessWidget {
                 const SizedBox(height: 6),
 
                 Text(
-                  lang.t('home_progress_of_lessons', params: {
-                    'current': '${(progress * 18).toInt()}',
-                    'total': '18',
-                  }),
+                  lang.t(
+                    'home_progress_of_lessons',
+                    params: {
+                      'current': '${(progress * 18).toInt()}',
+                      'total': '18',
+                    },
+                  ),
                   style: TextStyle(
                     color: Colors.white.withOpacity(0.65),
                     fontSize: 12,
@@ -479,9 +480,7 @@ class _HeroCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: Colors.white.withOpacity(0.12),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: Colors.white.withOpacity(0.15),
-                    ),
+                    border: Border.all(color: Colors.white.withOpacity(0.15)),
                   ),
                   child: Row(
                     children: [
@@ -566,8 +565,11 @@ class _LearningCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.school_rounded,
-                    color: Colors.white, size: 22),
+                child: const Icon(
+                  Icons.school_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -653,8 +655,11 @@ class _LearningCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    const Icon(Icons.arrow_forward_rounded,
-                        color: Colors.white, size: 18),
+                    const Icon(
+                      Icons.arrow_forward_rounded,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ],
                 ),
               ),
@@ -738,8 +743,11 @@ class _WikiCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(14),
                 ),
-                child: const Icon(Icons.explore_rounded,
-                    color: Colors.white, size: 22),
+                child: const Icon(
+                  Icons.explore_rounded,
+                  color: Colors.white,
+                  size: 22,
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -798,8 +806,11 @@ class _WikiCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.arrow_forward_rounded,
-                      color: Color(0xFF4F80FF), size: 18),
+                  const Icon(
+                    Icons.arrow_forward_rounded,
+                    color: Color(0xFF4F80FF),
+                    size: 18,
+                  ),
                 ],
               ),
             ),

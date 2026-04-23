@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../screens/language_service.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class WikiInfoTemplate extends StatefulWidget {
   final String title;
@@ -53,11 +54,25 @@ class _WikiInfoTemplateState extends State<WikiInfoTemplate> {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
-                child: Image.network(
-                  widget.imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: widget.imageUrl,
                   height: 220,
                   width: 320,
                   fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    height: 220,
+                    width: 320,
+                    color: const Color(0xFFF1F5F9),
+                    child: const Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    height: 220,
+                    width: 320,
+                    color: const Color(0xFFF1F5F9),
+                    child: const Icon(Icons.broken_image_rounded, color: Colors.grey, size: 40),
+                  ),
                 ),
               ),
             ),

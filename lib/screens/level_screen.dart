@@ -12,7 +12,7 @@ class LevelScreen extends StatelessWidget {
     final lang = Provider.of<LanguageService>(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF0F4FF),
+      backgroundColor: Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: EdgeInsets.fromLTRB(

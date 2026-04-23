@@ -878,7 +878,7 @@ class _LearningTemplateState extends State<LearningTemplate> {
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageService>(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F6FA),
+      backgroundColor: Colors.white,
       appBar: AppBar(
         leading: BackButton(onPressed: () => Navigator.pop(context)),
         title: Text(

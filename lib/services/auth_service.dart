@@ -5,7 +5,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class AuthService {
   static final _auth = FirebaseAuth.instance;
   static final _googleSignIn = GoogleSignIn(
-    serverClientId: '706326455197-68ncsvsce8tnbh6js880sa4i4kden4fc.apps.googleusercontent.com',
+    serverClientId:
+        '706326455197-68ncsvsce8tnbh6js880sa4i4kden4fc.apps.googleusercontent.com',
   );
   static final _firestore = FirebaseFirestore.instance;
 
@@ -26,7 +27,7 @@ class AuthService {
     final userCredential = await _auth.signInWithCredential(credential);
     final user = userCredential.user!;
 
-    // ✅ Simpan ke Firestore hanya jika user baru (belum pernah login sebelumnya)
+    //  Simpan ke Firestore hanya jika user baru (belum pernah login sebelumnya)
     final docRef = _firestore.collection('users').doc(user.uid);
     final doc = await docRef.get();
 
