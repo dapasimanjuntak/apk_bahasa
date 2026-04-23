@@ -196,32 +196,36 @@ class _AppLogo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final lang = Provider.of<LanguageService>(context);
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           padding: const EdgeInsets.all(6),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF4F80FF), Color(0xFF7B5FFF)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
+            color: Colors.white,
             borderRadius: BorderRadius.circular(10),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
           ),
           child: SizedBox(
             width: 24,
             height: 24,
-            child: SvgPicture.asset(
-              'assets/Logo.svg',
+            child: Image.asset(
+              'assets/app_icon.png',
               fit: BoxFit.contain,
             ),
           ),
         ),
         const SizedBox(width: 8),
-        const Text(
-          'ID Learning',
-          style: TextStyle(
+        Text(
+          lang.t('login_title'),
+          style: const TextStyle(
             color: Color(0xFF1A1F36),
             fontWeight: FontWeight.w800,
             fontSize: 15,

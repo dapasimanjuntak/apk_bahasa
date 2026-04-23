@@ -161,7 +161,13 @@ class _LoginScreenState extends State<LoginScreen>
                                 ),
                               ],
                             ),
-                            child: const Icon(Icons.school_rounded, size: 40, color: _accent),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Image.asset(
+                                'assets/app_icon.png',
+                                fit: BoxFit.contain,
+                              ),
+                            ),
                           ),
 
                           const SizedBox(height: 20),
