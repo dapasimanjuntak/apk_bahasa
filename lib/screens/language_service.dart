@@ -161,7 +161,7 @@ class LanguageService extends ChangeNotifier {
       'raja_ampat': 'Raja Ampat',
 
       // auth
-      'login_title': 'Indonesian for Tourist',
+      'login_title': 'Wicara Wisata',
       'signin_tab': 'Sign In',
       'signup_tab': 'Sign Up',
       'email_label': 'Email',
@@ -406,7 +406,7 @@ class LanguageService extends ChangeNotifier {
       'raja_ampat': 'Raja Ampat',
 
       // auth
-      'login_title': 'Indonesian for Tourist',
+      'login_title': 'Wicara Wisata',
       'signin_tab': 'Masuk',
       'signup_tab': 'Daftar',
       'email_label': 'Email',
@@ -651,7 +651,7 @@ class LanguageService extends ChangeNotifier {
       'raja_ampat': 'Raja Ampat',
 
       // auth
-      'login_title': 'Indonesian for Tourist',
+      'login_title': 'Wicara Wisata',
       'signin_tab': 'Iniciar sesión',
       'signup_tab': 'Registrarse',
       'email_label': 'Correo electrónico',
@@ -892,7 +892,7 @@ class LanguageService extends ChangeNotifier {
       'raja_ampat': 'Раджа-Ампат',
 
       // auth
-      'login_title': 'Indonesian for Tourist',
+      'login_title': 'Wicara Wisata',
       'signin_tab': 'Войти',
       'signup_tab': 'Регистрация',
       'email_label': 'Почта',
@@ -1133,7 +1133,7 @@ class LanguageService extends ChangeNotifier {
       'raja_ampat': '拉贾安帕特',
 
       // auth
-      'login_title': 'Indonesian for Tourist',
+      'login_title': 'Wicara Wisata',
       'signin_tab': '登录',
       'signup_tab': '注册',
       'email_label': '电子邮箱',

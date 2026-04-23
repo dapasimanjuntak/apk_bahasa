@@ -9,6 +9,8 @@ import 'package:provider/provider.dart';
 import 'language_service.dart';
 import '../templates/learning_template.dart';
 
+import 'package:flutter_svg/flutter_svg.dart';
+
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
@@ -207,7 +209,14 @@ class _AppLogo extends StatelessWidget {
             ),
             borderRadius: BorderRadius.circular(10),
           ),
-          child: const Icon(Icons.school_rounded, color: Colors.white, size: 16),
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: SvgPicture.asset(
+              'assets/Logo.svg',
+              fit: BoxFit.contain,
+            ),
+          ),
         ),
         const SizedBox(width: 8),
         const Text(

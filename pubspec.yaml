@@ -1,5 +1,5 @@
-name: apk_bahasa_baru
-description: "Apk Bahasa"
+name: wacara_wisata
+description: "WacaraWisata"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -30,10 +30,17 @@ dev_dependencies:
     flutter_test:
         sdk: flutter
     flutter_lints: ^6.0.0
+    flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons: ^0.13.1
+flutter_icons:
+    android: true
+    ios: false
+    image_path: "assets/app_icon.png"
 
 flutter:
     uses-material-design: true
 
     assets:
-        - lib/widgets/Logo.svg
+        - assets/Logo.svg
         - lib/widgets/google_logo.svg
