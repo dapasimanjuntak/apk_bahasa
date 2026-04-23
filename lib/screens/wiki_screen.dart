@@ -24,210 +24,261 @@ class _WikiScreenState extends State<WikiScreen> {
   String selectedDestinationKey = "ALL";
 
   // ===== DATA ATTRACTIONS =====
-  final Map<String, List<Map<String, dynamic>>> attractionsData = {
-    "BALI": [
-      {
-        "name": "bali_att_1",
-        "tips": [
-          "bali_att_1_tip1",
-          "bali_att_1_tip2",
-        ]
-      },
-      {
-        "name": "bali_att_2",
-        "tips": [
-          "bali_att_2_tip1",
-          "bali_att_2_tip2",
-        ]
-      },
-      {
-        "name": "Seminyak Beach",
-        "tips": [
-          "Trendy beach with cafes and bars",
-          "Great sunset watching spot",
-          "Water sports available",
-          "Busy but lively atmosphere"
-        ]
-      },
-    ],
-    "YOGYAKARTA": [
-      {
-        "name": "yogy_att_1",
-        "tips": [
-          "yogy_att_1_tip1",
-        ]
-      },
-      {
-        "name": "yogy_att_2",
-        "tips": [
-          "yogy_att_2_tip1",
-        ]
-      },
-      {
-        "name": "Keraton Yogyakarta",
-        "tips": [
-          "Royal palace of the Sultan",
-          "Cultural performances on weekends",
-          "Guided tours available",
-          "Rich history of Javanese royalty"
-        ]
-      },
-    ],
-    "JAKARTA": [
-      {
-        "name": "jak_att_1",
-        "tips": [
-          "jak_att_1_tip1",
-        ]
-      },
-      {
-        "name": "jak_att_2",
-        "tips": [
-          "jak_att_2_tip1",
-        ]
-      },
-      {
-        "name": "Taman Mini Indonesia Indah",
-        "tips": [
-          "Cultural park showcasing all provinces",
-          "Family friendly destination",
-          "Wide area — best explored by vehicle",
-          "Traditional houses from every region"
-        ]
-      },
-    ],
-    "RAJA_AMPAT": [
-      {
-        "name": "ra_att_1",
-        "tips": [
-          "ra_att_1_tip1",
-        ]
-      },
-      {
-        "name": "ra_att_2",
-        "tips": [
-          "ra_att_2_tip1",
-        ]
-      },
-      {
-        "name": "Arborek Village",
-        "tips": [
-          "Traditional Papuan fishing village",
-          "Snorkeling right from the jetty",
-          "Support local handicrafts",
-          "Warm and welcoming community"
-        ]
-      },
-    ],
-  };
+  // Keys menggunakan translation key, tips juga menggunakan translation key
+  Map<String, List<Map<String, dynamic>>> _buildAttractionsData(LanguageService lang) {
+    return {
+      "BALI": [
+        {
+          "name": lang.t('bali_att_1'),
+          "mapsUrl": "https://maps.google.com/?q=Pantai+Kuta,Bali",
+          "tips": [
+            lang.t('bali_att_1_tip1'),
+            lang.t('bali_att_1_tip2'),
+            lang.t('bali_att_1_tip3'),
+            lang.t('bali_att_1_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('bali_att_2'),
+          "mapsUrl": "https://maps.google.com/?q=Uluwatu+Temple,Bali",
+          "tips": [
+            lang.t('bali_att_2_tip1'),
+            lang.t('bali_att_2_tip2'),
+            lang.t('bali_att_2_tip3'),
+            lang.t('bali_att_2_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('bali_att_3'),
+          "mapsUrl": "https://maps.google.com/?q=Seminyak+Beach,Bali",
+          "tips": [
+            lang.t('bali_att_3_tip1'),
+            lang.t('bali_att_3_tip2'),
+            lang.t('bali_att_3_tip3'),
+            lang.t('bali_att_3_tip4'),
+          ]
+        },
+      ],
+      "YOGYAKARTA": [
+        {
+          "name": lang.t('yogy_att_1'),
+          "mapsUrl": "https://maps.google.com/?q=Candi+Borobudur,Magelang",
+          "tips": [
+            lang.t('yogy_att_1_tip1'),
+            lang.t('yogy_att_1_tip2'),
+            lang.t('yogy_att_1_tip3'),
+            lang.t('yogy_att_1_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('yogy_att_2'),
+          "mapsUrl": "https://maps.google.com/?q=Candi+Prambanan,Yogyakarta",
+          "tips": [
+            lang.t('yogy_att_2_tip1'),
+            lang.t('yogy_att_2_tip2'),
+            lang.t('yogy_att_2_tip3'),
+            lang.t('yogy_att_2_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('yogy_att_3'),
+          "mapsUrl": "https://maps.google.com/?q=Keraton+Yogyakarta",
+          "tips": [
+            lang.t('yogy_att_3_tip1'),
+            lang.t('yogy_att_3_tip2'),
+            lang.t('yogy_att_3_tip3'),
+            lang.t('yogy_att_3_tip4'),
+          ]
+        },
+      ],
+      "JAKARTA": [
+        {
+          "name": lang.t('jak_att_1'),
+          "mapsUrl": "https://maps.google.com/?q=Kota+Tua,Jakarta",
+          "tips": [
+            lang.t('jak_att_1_tip1'),
+            lang.t('jak_att_1_tip2'),
+            lang.t('jak_att_1_tip3'),
+            lang.t('jak_att_1_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('jak_att_2'),
+          "mapsUrl": "https://maps.google.com/?q=Kepulauan+Seribu,Jakarta",
+          "tips": [
+            lang.t('jak_att_2_tip1'),
+            lang.t('jak_att_2_tip2'),
+            lang.t('jak_att_2_tip3'),
+            lang.t('jak_att_2_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('jak_att_3'),
+          "mapsUrl": "https://maps.google.com/?q=Taman+Mini+Indonesia+Indah,Jakarta",
+          "tips": [
+            lang.t('jak_att_3_tip1'),
+            lang.t('jak_att_3_tip2'),
+            lang.t('jak_att_3_tip3'),
+            lang.t('jak_att_3_tip4'),
+          ]
+        },
+      ],
+      "RAJA_AMPAT": [
+        {
+          "name": lang.t('ra_att_1'),
+          "mapsUrl": "https://maps.google.com/?q=Wayag+Raja+Ampat",
+          "tips": [
+            lang.t('ra_att_1_tip1'),
+            lang.t('ra_att_1_tip2'),
+            lang.t('ra_att_1_tip3'),
+            lang.t('ra_att_1_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('ra_att_2'),
+          "mapsUrl": "https://maps.google.com/?q=Pianemo+Raja+Ampat",
+          "tips": [
+            lang.t('ra_att_2_tip1'),
+            lang.t('ra_att_2_tip2'),
+            lang.t('ra_att_2_tip3'),
+            lang.t('ra_att_2_tip4'),
+          ]
+        },
+        {
+          "name": lang.t('ra_att_3'),
+          "mapsUrl": "https://maps.google.com/?q=Arborek+Village+Raja+Ampat",
+          "tips": [
+            lang.t('ra_att_3_tip1'),
+            lang.t('ra_att_3_tip2'),
+            lang.t('ra_att_3_tip3'),
+            lang.t('ra_att_3_tip4'),
+          ]
+        },
+      ],
+    };
+  }
 
   // ===== DATA CULTURES =====
-  final Map<String, List<Map<String, dynamic>>> culturesData = {
-    "BALI": [
-      {
-        "name": "bali_cul_1",
-        "details": [
-          "bali_cul_1_det",
-        ]
-      },
-      {
-        "name": "Local Cuisine",
-        "details": [
-          "Try Babi Guling (roast pig) and Lawar",
-          "Vibrant street food scene",
-          "Fresh ingredients from local markets",
-          "Spicy and flavorful dishes"
-        ]
-      },
-      {
-        "name": "Useful Phrases",
-        "details": [
-          "Om Swastiastu — Balinese greeting",
-          "Suksma — Thank you",
-          "Rahajeng semeng — Good morning",
-          "Ampura — Sorry / Excuse me"
-        ]
-      },
-    ],
-    "YOGYAKARTA": [
-      {
-        "name": "yogy_cul_1",
-        "details": [
-          "yogy_cul_1_det",
-        ]
-      },
-      {
-        "name": "Batik Craft",
-        "details": [
-          "UNESCO-recognized art form",
-          "Try making your own batik in workshops",
-          "Malioboro is the best place to buy",
-          "Motifs carry cultural meanings"
-        ]
-      },
-      {
-        "name": "Useful Phrases",
-        "details": [
-          "Sugeng rawuh — Welcome (Javanese)",
-          "Matur nuwun — Thank you (Javanese)",
-          "Mangga — Please / After you",
-          "Nuwun sewu — Excuse me"
-        ]
-      },
-    ],
-    "JAKARTA": [
-      {
-        "name": "jak_cul_1",
-        "details": [
-          "jak_cul_1_det",
-        ]
-      },
-      {
-        "name": "Modern Food Scene",
-        "details": [
-          "Street food at Glodok (Chinatown)",
-          "Gado-gado and Soto Betawi are must-tries",
-          "Many international cuisines available",
-          "Food courts in malls are affordable"
-        ]
-      },
-      {
-        "name": "Useful Phrases",
-        "details": [
-          "Halo / Hai — Hello",
-          "Terima kasih — Thank you",
-          "Maaf — Sorry / Excuse me",
-          "Berapa harganya? — How much is it?"
-        ]
-      },
-    ],
-    "RAJA_AMPAT": [
-      {
-        "name": "ra_cul_1",
-        "details": [
-          "ra_cul_1_det",
-        ]
-      },
-      {
-        "name": "Local Food",
-        "details": [
-          "Fresh seafood caught daily",
-          "Papeda (sago porridge) with fish soup",
-          "Unique flavors from eastern Indonesia",
-          "Pinang (betel nut) is commonly chewed locally"
-        ]
-      },
-      {
-        "name": "Useful Phrases",
-        "details": [
-          "Selamat datang — Welcome",
-          "Terima kasih — Thank you",
-          "Permisi — Excuse me",
-          "Tolong — Please / Help"
-        ]
-      },
-    ],
-  };
+  Map<String, List<Map<String, dynamic>>> _buildCulturesData(LanguageService lang) {
+    return {
+      "BALI": [
+        {
+          "name": lang.t('bali_cul_1'),
+          "details": [
+            lang.t('bali_cul_1_det1'),
+            lang.t('bali_cul_1_det2'),
+            lang.t('bali_cul_1_det3'),
+            lang.t('bali_cul_1_det4'),
+          ]
+        },
+        {
+          "name": lang.t('bali_cul_2'),
+          "details": [
+            lang.t('bali_cul_2_det1'),
+            lang.t('bali_cul_2_det2'),
+            lang.t('bali_cul_2_det3'),
+            lang.t('bali_cul_2_det4'),
+          ]
+        },
+        {
+          "name": lang.t('bali_cul_3'),
+          "details": [
+            lang.t('bali_cul_3_det1'),
+            lang.t('bali_cul_3_det2'),
+            lang.t('bali_cul_3_det3'),
+            lang.t('bali_cul_3_det4'),
+          ]
+        },
+      ],
+      "YOGYAKARTA": [
+        {
+          "name": lang.t('yogy_cul_1'),
+          "details": [
+            lang.t('yogy_cul_1_det1'),
+            lang.t('yogy_cul_1_det2'),
+            lang.t('yogy_cul_1_det3'),
+            lang.t('yogy_cul_1_det4'),
+          ]
+        },
+        {
+          "name": lang.t('yogy_cul_2'),
+          "details": [
+            lang.t('yogy_cul_2_det1'),
+            lang.t('yogy_cul_2_det2'),
+            lang.t('yogy_cul_2_det3'),
+            lang.t('yogy_cul_2_det4'),
+          ]
+        },
+        {
+          "name": lang.t('yogy_cul_3'),
+          "details": [
+            lang.t('yogy_cul_3_det1'),
+            lang.t('yogy_cul_3_det2'),
+            lang.t('yogy_cul_3_det3'),
+            lang.t('yogy_cul_3_det4'),
+          ]
+        },
+      ],
+      "JAKARTA": [
+        {
+          "name": lang.t('jak_cul_1'),
+          "details": [
+            lang.t('jak_cul_1_det1'),
+            lang.t('jak_cul_1_det2'),
+            lang.t('jak_cul_1_det3'),
+            lang.t('jak_cul_1_det4'),
+          ]
+        },
+        {
+          "name": lang.t('jak_cul_2'),
+          "details": [
+            lang.t('jak_cul_2_det1'),
+            lang.t('jak_cul_2_det2'),
+            lang.t('jak_cul_2_det3'),
+            lang.t('jak_cul_2_det4'),
+          ]
+        },
+        {
+          "name": lang.t('jak_cul_3'),
+          "details": [
+            lang.t('jak_cul_3_det1'),
+            lang.t('jak_cul_3_det2'),
+            lang.t('jak_cul_3_det3'),
+            lang.t('jak_cul_3_det4'),
+          ]
+        },
+      ],
+      "RAJA_AMPAT": [
+        {
+          "name": lang.t('ra_cul_1'),
+          "details": [
+            lang.t('ra_cul_1_det1'),
+            lang.t('ra_cul_1_det2'),
+            lang.t('ra_cul_1_det3'),
+            lang.t('ra_cul_1_det4'),
+          ]
+        },
+        {
+          "name": lang.t('ra_cul_2'),
+          "details": [
+            lang.t('ra_cul_2_det1'),
+            lang.t('ra_cul_2_det2'),
+            lang.t('ra_cul_2_det3'),
+            lang.t('ra_cul_2_det4'),
+          ]
+        },
+        {
+          "name": lang.t('ra_cul_3'),
+          "details": [
+            lang.t('ra_cul_3_det1'),
+            lang.t('ra_cul_3_det2'),
+            lang.t('ra_cul_3_det3'),
+            lang.t('ra_cul_3_det4'),
+          ]
+        },
+      ],
+    };
+  }
 
   // ===== DATA EMERGENCIES =====
   final Map<String, Map<String, String>> emergenciesData = {
@@ -257,6 +308,11 @@ class _WikiScreenState extends State<WikiScreen> {
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageService>(context);
+
+    // Build data with current language
+    final attractionsData = _buildAttractionsData(lang);
+    final culturesData = _buildCulturesData(lang);
+
     return Scaffold(
 
       // APPBAR
@@ -338,7 +394,7 @@ class _WikiScreenState extends State<WikiScreen> {
                 child: TextButton.icon(
                   onPressed: () {
                     Navigator.pop(context);
-                   },
+                  },
                   icon: const Icon(Icons.arrow_back),
                   label: Text(lang.t('wiki_back')),
                 ),
@@ -422,15 +478,15 @@ class _WikiScreenState extends State<WikiScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.grey.shade300),
-                   borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: DropdownButton<String>(
                   value: selectedDestinationKey,
                   isExpanded: true,
                   underline: const SizedBox(),
                   items: dropdownValues.map((String key) {
-                    String label = key == "ALL" 
-                        ? lang.t('wiki_all_destinations') 
+                    String label = key == "ALL"
+                        ? lang.t('wiki_all_destinations')
                         : lang.t(key.toLowerCase());
                     return DropdownMenuItem(
                       value: key,
@@ -445,7 +501,9 @@ class _WikiScreenState extends State<WikiScreen> {
                 ),
               ),
 
-                    // ===== DESTINATION CARDS =====
+              const SizedBox(height: 20),
+
+              // ===== DESTINATION CARDS =====
               if (selectedDestinationKey == "ALL" ||
                   selectedDestinationKey == "BALI") ...[
                 destinationCard(
@@ -455,7 +513,6 @@ class _WikiScreenState extends State<WikiScreen> {
                   attractionsData["BALI"]!,
                   culturesData["BALI"]!,
                   emergenciesData["BALI"]!,
-                  lang: lang,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -469,7 +526,6 @@ class _WikiScreenState extends State<WikiScreen> {
                   attractionsData["YOGYAKARTA"]!,
                   culturesData["YOGYAKARTA"]!,
                   emergenciesData["YOGYAKARTA"]!,
-                  lang: lang,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -483,7 +539,6 @@ class _WikiScreenState extends State<WikiScreen> {
                   attractionsData["JAKARTA"]!,
                   culturesData["JAKARTA"]!,
                   emergenciesData["JAKARTA"]!,
-                  lang: lang,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -497,7 +552,6 @@ class _WikiScreenState extends State<WikiScreen> {
                   attractionsData["RAJA_AMPAT"]!,
                   culturesData["RAJA_AMPAT"]!,
                   emergenciesData["RAJA_AMPAT"]!,
-                  lang: lang,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -602,11 +656,13 @@ class _WikiScreenState extends State<WikiScreen> {
                         children: [
                           const Icon(Icons.phone, color: Colors.red, size: 28),
                           const SizedBox(width: 10),
-                          Text(
-                            lang.t('wiki_info7'),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Text(
+                              lang.t('wiki_info7'),
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -634,8 +690,7 @@ class _WikiScreenState extends State<WikiScreen> {
                             const SizedBox(width: 12),
                             Text(
                               lang.t('wiki_em1'),
-                              style:
-                              const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -652,13 +707,11 @@ class _WikiScreenState extends State<WikiScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.medical_services,
-                                color: Colors.red),
+                            const Icon(Icons.medical_services, color: Colors.red),
                             const SizedBox(width: 12),
                             Text(
                               lang.t('wiki_em2'),
-                              style:
-                              const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -675,13 +728,11 @@ class _WikiScreenState extends State<WikiScreen> {
                         ),
                         child: Row(
                           children: [
-                            const Icon(Icons.local_fire_department,
-                                color: Colors.red),
+                            const Icon(Icons.local_fire_department, color: Colors.red),
                             const SizedBox(width: 12),
                             Text(
                               lang.t('wiki_em3'),
-                              style:
-                              const TextStyle(fontWeight: FontWeight.bold),
+                              style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                           ],
                         ),
@@ -692,9 +743,7 @@ class _WikiScreenState extends State<WikiScreen> {
               ),
 
               const SizedBox(height: 20),
-          
             ],
-          
           ),
         ),
       ),
@@ -709,7 +758,6 @@ class _WikiScreenState extends State<WikiScreen> {
       List<Map<String, dynamic>> attractions,
       List<Map<String, dynamic>> cultures,
       Map<String, String> emergencies,
-      {required LanguageService lang}
       ) {
     return InkWell(
       onTap: () {
